@@ -1,0 +1,206 @@
+/* ============================================
+   Local Mind Browser — History
+   ============================================ */
+#history-page {
+  position: absolute;
+  inset: 0;
+  /* Same layer as the other full-page views (News and Finance are 6). At 2 it
+     sat under the new tab page, so opening History looked like nothing had
+     happened even though the page was there. */
+  z-index: 6;
+  display: none;              /* shown as flex by HistoryPage.show() */
+  flex-direction: column;
+  background: var(--bg-base);
+  overflow: hidden;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.hist-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 26px 30px 0;
+}
+.hist-title { margin: 0; font-size: 26px; font-weight: 650; color: var(--text-primary); }
+.hist-sub { margin-top: 5px; font-size: 12.5px; color: var(--text-tertiary); }
+
+.hist-actions { display: flex; align-items: center; gap: 8px; }
+
+.hist-search {
+  width: 240px; height: 34px;
+  padding: 0 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font: inherit; font-size: 13px;
+}
+.hist-search:focus { outline: none; border-color: var(--border-focus); }
+
+.hist-btn {
+  height: 34px; padding: 0 13px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font: inherit; font-size: 12.5px; cursor: pointer;
+  white-space: nowrap;
+}
+.hist-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+.hist-btn.danger { color: var(--error); }
+.hist-btn.primary { background: var(--accent); border-color: var(--accent); color: #08150c; font-weight: 620; }
+
+/* ── Filter row ──────────────────────────────────────────────────────────── */
+.hist-filters {
+  flex: 0 0 auto;
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 16px 30px 14px;
+  border-bottom: 1px solid var(--border-color);
+}
+.hist-chip {
+  height: 28px; padding: 0 11px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit; font-size: 12px; cursor: pointer;
+}
+.hist-chip:hover { background: var(--bg-secondary); color: var(--text-primary); }
+.hist-chip.on {
+  background: rgba(43,212,115,0.15);
+  border-color: rgba(43,212,115,0.45);
+  color: var(--accent);
+}
+.hist-gap { flex: 1 1 auto; }
+
+/* The bulk bar replaces the filter row's right side only when something is
+   selected — a permanently visible "0 selected" is just noise. */
+.hist-bulk { display: none; align-items: center; gap: 8px; }
+.hist-bulk.on { display: flex; }
+.hist-bulk-count { font-size: 12.5px; color: var(--text-secondary); }
+
+/* ── Body ────────────────────────────────────────────────────────────────── */
+.hist-body { flex: 1 1 auto; display: flex; min-height: 0; }
+
+.hist-rail {
+  flex: 0 0 208px; width: 208px;
+  border-right: 1px solid var(--border-color);
+  overflow-y: auto;
+  padding: 16px 10px 30px;
+}
+.hist-rail-title {
+  padding: 0 10px 8px;
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--text-tertiary);
+}
+.hist-site {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 10px; border-radius: var(--radius-md);
+  cursor: pointer; color: var(--text-secondary); font-size: 12.5px;
+}
+.hist-site:hover { background: var(--bg-secondary); color: var(--text-primary); }
+.hist-site.on { background: var(--bg-tertiary); color: var(--text-primary); }
+.hist-site-name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hist-site-count { font-size: 11.5px; color: var(--text-tertiary); }
+.hist-site-x {
+  opacity: 0; border: 0; background: none; cursor: pointer;
+  color: var(--text-tertiary); font-size: 15px; line-height: 1; padding: 0 2px;
+}
+.hist-site:hover .hist-site-x { opacity: 1; }
+.hist-site-x:hover { color: var(--error); }
+
+.hist-list { flex: 1 1 auto; overflow-y: auto; padding: 10px 30px 40px; }
+
+.hist-day {
+  position: sticky; top: 0; z-index: 1;
+  padding: 14px 4px 7px;
+  background: var(--bg-base);
+  font-size: 11.5px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--text-tertiary);
+}
+
+.hist-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 10px; border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.hist-row:hover { background: var(--bg-secondary); }
+.hist-row.picked { background: rgba(43,212,115,0.10); }
+
+.hist-check {
+  flex: 0 0 auto; width: 15px; height: 15px;
+  accent-color: var(--accent); cursor: pointer;
+  opacity: 0;
+}
+.hist-row:hover .hist-check,
+.hist-row.picked .hist-check,
+body.hist-selecting .hist-check { opacity: 1; }
+
+.hist-time { flex: 0 0 62px; font-size: 11.5px; color: var(--text-tertiary); }
+
+.hist-icon {
+  flex: 0 0 auto; width: 16px; height: 16px;
+  border-radius: 4px; object-fit: contain;
+  background: var(--bg-tertiary);
+}
+.hist-letter {
+  flex: 0 0 auto;
+  width: 16px; height: 16px; border-radius: 4px;
+  display: grid; place-items: center;
+  background: var(--bg-tertiary); color: var(--text-secondary);
+  font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+}
+
+.hist-main { flex: 1 1 auto; min-width: 0; }
+.hist-name {
+  font-size: 13px; color: var(--text-primary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.hist-url {
+  font-size: 11.5px; color: var(--text-tertiary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.hist-visits {
+  flex: 0 0 auto; font-size: 11px; color: var(--text-tertiary);
+  border: 1px solid var(--border-color); border-radius: 999px;
+  padding: 1px 7px;
+}
+
+.hist-row-actions { flex: 0 0 auto; display: flex; gap: 2px; opacity: 0; }
+.hist-row:hover .hist-row-actions { opacity: 1; }
+.hist-act {
+  width: 26px; height: 26px; display: grid; place-items: center;
+  border: 0; background: none; border-radius: 6px;
+  color: var(--text-tertiary); cursor: pointer;
+}
+.hist-act:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+.hist-act.danger:hover { color: var(--error); }
+.hist-act svg { width: 14px; height: 14px; }
+
+.hist-empty { padding: 60px 20px; text-align: center; color: var(--text-tertiary); }
+
+/* ── Clear menu ──────────────────────────────────────────────────────────── */
+.hist-menu-wrap { position: relative; }
+.hist-menu {
+  position: absolute; top: calc(100% + 6px); right: 0;
+  min-width: 190px; padding: 5px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: 0 14px 36px rgba(0,0,0,0.5);
+  display: none; z-index: 20;
+}
+.hist-menu.on { display: block; }
+.hist-menu button {
+  display: block; width: 100%; padding: 8px 10px;
+  border: 0; background: none; border-radius: 7px;
+  color: var(--text-primary); font: inherit; font-size: 12.5px;
+  text-align: left; cursor: pointer;
+}
+.hist-menu button:hover { background: var(--bg-tertiary); }
+.hist-menu button.danger { color: var(--error); }
+.hist-menu hr { border: 0; border-top: 1px solid var(--border-color); margin: 5px 2px; }
