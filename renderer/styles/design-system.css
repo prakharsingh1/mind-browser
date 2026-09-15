@@ -1,0 +1,412 @@
+/* ============================================
+   Local Mind Browser — Design System
+   ============================================ */
+
+/* ---------- CSS Custom Properties ---------- */
+:root {
+  /* Backgrounds */
+  --bg-base: #050807;
+  --bg-primary: #080c09;
+  --bg-secondary: #111613;
+  --bg-tertiary: #19241e;
+  --bg-elevated: #1e2d25;
+
+  /* Text */
+  --text-primary: #e6f0eb;
+  --text-secondary: #8c9e94;
+  --text-tertiary: #5a6e63;
+
+  /* Accent */
+  --accent: #2bd473;
+  --accent-ink: #2bd473;      /* accent for text/icons; darkens in light mode */
+  --accent-hover: #3aeba0;
+  --accent-dim: rgba(43, 212, 115, 0.15);
+  --accent-glow: rgba(43, 212, 115, 0.4);
+
+  /* Agent Colors */
+  --agent-planner: #F59E0B;
+  --agent-navigator: #4ECDC4;
+  --agent-researcher: #A78BFA;
+  --agent-writer: #F472B6;
+  --agent-analyst: #FBBF24;
+
+  /* Semantic */
+  --success: #2bd473;
+  --error: #ef4444;
+  --warning: #f59e0b;
+  --info: #3b82f6;
+
+  /* Border */
+  --border-color: rgba(43, 212, 115, 0.1);
+  /* Focus border: visible, but never green. A green rectangle around every
+     field on each keystroke read as an error state and was pure noise. */
+  --border-focus: rgba(255, 255, 255, 0.26);
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  /* Fonts */
+  /* Native system stack — matches Arc/Chrome/Safari chrome, zero network cost */
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, Roboto, 'Helvetica Neue', sans-serif;
+  --font-mono: 'SF Mono', ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
+
+  /* Spacing */
+  --gap-sm: 8px;
+  --gap-md: 16px;
+  --gap-lg: 24px;
+
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s ease;
+  --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---------- Light Theme ----------
+   Also applied at :root, because <html> is the PARENT of <body> and so never
+   matched the body-scoped block. That left the root element painted with the
+   dark --bg-primary, which showed through as a dark backdrop behind everything.
+
+   Two colours are deliberately different from a naive inversion:
+   • --text-tertiary is darkened from #9ca3af (2.5:1 on white, unreadable) to
+     #6b7280, which clears 4.5:1.
+   • --accent-ink is the accent used for TEXT and icons. The brand green is
+     1.9:1 on white, so labels rendered in it were effectively invisible. Fills
+     keep the bright brand green; only ink darkens. */
+:root:has(body[data-theme="light"]),
+body[data-theme="light"],
+body[data-theme="light"] * {
+  --bg-base: #f3f4f6;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f8fa;
+  --bg-tertiary: #eceef1;
+  --bg-elevated: #ffffff;
+
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-tertiary: #6b7280;
+
+  --border-color: #dfe3e8;
+  --border-focus: #9aa3ae;
+
+  --accent-ink: #0d8f4d;
+  --accent-dim: rgba(43, 212, 115, 0.12);
+  --accent-glow: rgba(43, 212, 115, 0.2);
+}
+
+/* Light mode: top bar */
+body[data-theme="light"] #top-bar {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-bottom-color: #d1d5db;
+}
+
+/* Light mode: tab bar */
+body[data-theme="light"] #tab-bar {
+  background: #f5f6f8;
+}
+
+/* Light mode: command palette overlay */
+body[data-theme="light"] #command-palette-overlay {
+  background: rgba(0, 0, 0, 0.25);
+}
+body[data-theme="light"] .command-palette {
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15);
+  border: 1px solid #d1d5db;
+}
+
+/* Light mode: chat messages */
+body[data-theme="light"] .chat-ai-message {
+  background: linear-gradient(135deg, #e8faf0 0%, #f0fdf4 100%) !important;
+}
+
+/* Light mode: new tab page widgets */
+body[data-theme="light"] .ntp-widget {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+/* Light mode: find bar, reading mode, split view overlays */
+body[data-theme="light"] .find-bar,
+body[data-theme="light"] .reading-overlay {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  border: 1px solid #d1d5db;
+}
+
+/* Light mode: page info popover */
+body[data-theme="light"] #page-info-popover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+  border-color: #d1d5db !important;
+}
+
+/* Light mode: settings button text on accent bg */
+body[data-theme="light"] .settings-btn:not(.secondary):not(.danger) {
+  color: #ffffff;
+}
+
+/* Light mode: scrollbars */
+body[data-theme="light"] ::-webkit-scrollbar-track {
+  background: #f3f4f6;
+}
+body[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: #c4c8cc;
+}
+body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: #a0a5ab;
+}
+/* ---------- CSS Reset ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ---------- Base Document ---------- */
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-body);
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---------- Base Element Styles ---------- */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+
+h1 { font-size: 24px; }
+h2 { font-size: 20px; }
+h3 { font-size: 16px; }
+h4 { font-size: 14px; }
+h5 { font-size: 13px; }
+h6 { font-size: 12px; }
+
+a {
+  color: var(--accent-ink);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  outline: none;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Keyboard-focus ring for every other interactive element.
+   Text fields are deliberately NOT here: they match :focus-visible on click as
+   well as on Tab, so this drew a green rectangle around a field the moment you
+   typed in it. They show focus through border-color (--border-focus) instead. */
+a:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-radius: var(--radius-sm);
+}
+
+/* "Show animations: off" and OS reduced-motion kill ALL motion, everywhere */
+body.disable-animations *,
+body.disable-animations *::before,
+body.disable-animations *::after {
+  animation: none !important;
+  transition: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+input,
+textarea {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: inherit;
+  outline: none;
+  transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+input:focus,
+textarea:focus {
+  border-color: var(--border-focus);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-tertiary);
+}
+
+select {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: inherit;
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--transition-normal);
+}
+
+select:focus {
+  border-color: var(--border-focus);
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* ---------- Custom Scrollbar ---------- */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  transition: background var(--transition-fast);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-dim);
+}
+
+/* ---------- Selection ---------- */
+::selection {
+  background: var(--accent-dim);
+  color: var(--text-primary);
+}
+
+/* ---------- Utility Classes ---------- */
+.hidden {
+  display: none !important;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.gap-sm {
+  gap: var(--gap-sm);
+}
+
+.gap-md {
+  gap: var(--gap-md);
+}
+
+.gap-lg {
+  gap: var(--gap-lg);
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-sm {
+  font-size: 13px;
+}
+
+.text-xs {
+  font-size: 11px;
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-accent {
+  color: var(--accent-ink);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Appearance customisation ──────────────────────────────────────────────
+   The accent tokens above are the DEFAULTS. Appearance.applyAccent() writes
+   the same names onto the root element's inline style, which wins over these
+   without needing a second theme file per colour.
+
+   --accent-contrast is what sits ON a filled accent button. It flips to dark
+   text when the accent is light, so an amber or teal accent does not end up
+   with white text on it. */
+:root {
+  --accent-contrast: #08150c;
+  --ui-scale: 1;
+}
+
+/* One multiplier moves the whole interface together. Applied at the root font
+   size so every rem-based size in the design system follows it, rather than
+   scaling labels and leaving the paddings behind. */
+html { font-size: calc(16px * var(--ui-scale)); }
+
+/* A toolbar button the user has switched off. display:none rather than
+   visibility, so it does not hold its slot in the flex row. */
+.tb-hidden { display: none !important; }

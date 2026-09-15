@@ -1,0 +1,465 @@
+/* ============================================
+   Local Mind Browser — Chat Messages
+   ============================================ */
+
+/* ---------- Chat Message ---------- */
+.chat-message {
+  display: flex;
+  flex-direction: column;
+  max-width: 90%;
+  animation: fadeSlideUp 0.3s ease;
+}
+
+.chat-message.user {
+  align-self: flex-end;
+  max-width: 80%;
+}
+
+.chat-message.assistant {
+  align-self: flex-start;
+}
+
+/* ---------- Message Bubble ---------- */
+.message-bubble {
+  padding: 12px 16px;
+  border-radius: var(--radius-lg);
+  font-size: 13.5px;
+  line-height: 1.6;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.user .message-bubble {
+  background: var(--accent-dim);
+  border-top-right-radius: 4px;
+  color: var(--text-primary);
+}
+
+.assistant .message-bubble {
+  background: var(--bg-secondary);
+  border-top-left-radius: 4px;
+  color: var(--text-primary);
+  position: relative;
+  overflow: hidden;
+}
+
+.assistant .message-bubble::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    ellipse at 10% 10%,
+    rgba(43, 212, 115, 0.06) 0%,
+    transparent 70%
+  );
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* ---------- Message Meta ---------- */
+.message-meta {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user .message-meta {
+  justify-content: flex-end;
+}
+
+/* ---------- Agent Badge ---------- */
+.agent-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.agent-badge.planner {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--agent-planner);
+}
+
+.agent-badge.navigator {
+  background: rgba(78, 205, 196, 0.15);
+  color: var(--agent-navigator);
+}
+
+.agent-badge.researcher {
+  background: rgba(167, 139, 250, 0.15);
+  color: var(--agent-researcher);
+}
+
+.agent-badge.writer {
+  background: rgba(244, 114, 182, 0.15);
+  color: var(--agent-writer);
+}
+
+.agent-badge.analyst {
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--agent-analyst);
+}
+
+/* ---------- Markdown Content ---------- */
+.md-content h1,
+.md-content h2,
+.md-content h3 {
+  font-weight: 600;
+  margin: 16px 0 8px;
+  color: var(--text-primary);
+}
+
+.md-content h1 { font-size: 18px; }
+.md-content h2 { font-size: 16px; }
+.md-content h3 { font-size: 14px; }
+
+.md-content p {
+  margin: 6px 0;
+  line-height: 1.65;
+}
+
+.md-content strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.md-content em {
+  font-style: italic;
+}
+
+/* Inline code */
+.md-content code {
+  background: var(--bg-tertiary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono, 'SF Mono', monospace);
+  font-size: 12.5px;
+  color: var(--accent-ink);
+}
+
+/* Code blocks */
+/* Artifact Cards */
+.md-content .artifact-card {
+  margin: 12px 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-base);
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.md-content .artifact-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.md-content .artifact-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+}
+
+.md-content pre {
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+  position: relative;
+  background: transparent;
+  border: none;
+}
+
+.md-content pre code {
+  background: none;
+  padding: 0;
+  color: var(--text-primary);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+/* Code copy button */
+.code-copy-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.code-copy-btn:hover {
+  background: var(--accent-dim);
+  color: var(--accent-ink);
+}
+
+.code-copy-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Lists */
+.md-content ul,
+.md-content ol {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+
+.md-content li {
+  margin: 4px 0;
+  line-height: 1.6;
+}
+
+.md-content li::marker {
+  color: var(--accent-ink);
+}
+
+/* Links */
+.md-content a {
+  color: var(--accent-ink);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.md-content a:hover {
+  text-decoration: underline;
+}
+
+/* Blockquote */
+/* No green left rule here — quotes get a tinted panel instead, matching the
+   rest of the app after the left-accent-bar style was dropped. */
+.md-content blockquote {
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-style: italic;
+  margin: 10px 0;
+}
+.md-content blockquote > .md-content > p:last-child { margin-bottom: 0; }
+.md-content blockquote > .md-content > p:first-child { margin-top: 0; }
+
+/* Tables */
+.md-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 12.5px;
+}
+
+.md-content th {
+  background: var(--bg-tertiary);
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.md-content td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.md-content tr:hover {
+  background: var(--bg-tertiary);
+}
+
+/* A wide table must scroll inside its own box — without this it forces the
+   whole 380px panel to scroll sideways and the message text goes with it. */
+.md-content .md-table-wrap {
+  overflow-x: auto;
+  margin: 12px 0;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  -webkit-overflow-scrolling: touch;
+}
+.md-content .md-table-wrap table { margin: 0; border: none; }
+.md-content .md-table-wrap th:first-child,
+.md-content .md-table-wrap td:first-child { padding-left: 12px; }
+.md-content .md-table-wrap tbody tr:last-child td { border-bottom: none; }
+.md-content th { white-space: nowrap; }
+
+/* Images */
+.md-content .md-figure { margin: 12px 0; }
+.md-content .md-figure img,
+.md-content .md-inline-img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+}
+.md-content .md-inline-img { display: inline-block; vertical-align: middle; max-height: 1.6em; border: none; }
+.md-content .md-figure figcaption {
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+  line-height: 1.4;
+}
+
+.md-content del { opacity: 0.6; }
+
+.md-content .artifact-lines {
+  margin-left: 6px;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Horizontal rule */
+.md-content hr {
+  border: none;
+  height: 1px;
+  background: var(--border-color);
+  margin: 16px 0;
+}
+
+/* ---------- Answer actions ---------- */
+/* Kept quiet until the message is hovered, so a long thread stays calm. */
+.answer-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.chat-message:hover .answer-actions,
+.answer-actions:focus-within { opacity: 1; }
+
+.answer-action {
+  padding: 3px 9px;
+  border-radius: 7px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  /* tertiary lands at ~4.3:1 on the light surface, under AA for 11px text */
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.answer-action:hover {
+  color: var(--text-primary);
+  border-color: var(--accent-dim);
+}
+.answer-action.ok { color: var(--accent-ink); border-color: var(--accent-dim); }
+
+/* Touch and keyboard users never hover, so don't hide the controls from them. */
+@media (hover: none) {
+  .answer-actions { opacity: 1; }
+}
+
+/* ---------- Typing Indicator ---------- */
+.typing-indicator {
+  display: flex;
+  gap: 4px;
+  padding: 8px 16px;
+}
+
+.typing-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: bounce 0.6s infinite;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+/* ---------- Agent Action Log ---------- */
+.agent-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 12px;
+  border-left: 2px solid var(--border-color);
+  margin-left: 8px;
+  font-size: 12.5px;
+}
+
+.agent-step.active {
+  /* status shows in the icon and text, not a green rail */
+}
+
+.agent-step.completed {
+  opacity: 0.7;
+}
+
+.agent-step-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.agent-step-content {
+  flex: 1;
+  color: var(--text-secondary);
+}
+
+.agent-step-action {
+  color: var(--accent-ink);
+  font-weight: 500;
+}
+
+/* ── Charts ───────────────────────────────────────────────────────────────── */
+/* Drawn as inline SVG rather than with a charting library: the panel blocks
+   remote scripts, so nothing external could load here anyway. */
+.md-chart {
+  margin: 10px 0;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+}
+.md-chart svg { width: 100%; height: auto; display: block; }
+.md-chart .mdc-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+.md-chart .mdc-grid { stroke: var(--border-color); stroke-width: 1; }
+.md-chart .mdc-axis { fill: var(--text-tertiary); font-size: 10px; }
+
+/* ── Rendered HTML/SVG artifacts ──────────────────────────────────────────── */
+.artifact-tools { display: flex; align-items: center; gap: 6px; }
+.artifact-preview {
+  width: 100%;
+  height: 260px;
+  border: 0;
+  display: block;
+  background: var(--bg-primary);
+}
