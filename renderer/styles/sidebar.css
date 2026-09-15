@@ -1,0 +1,664 @@
+/* ============================================
+   Local Mind Browser — Sidebar
+   ============================================ */
+
+/* ---------- Sidebar Inner ---------- */
+.sidebar-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 8px 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ---------- Sidebar Toggle ---------- */
+.sidebar-toggle {
+  width: 100%;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  font-size: 13px;
+}
+
+.sidebar-toggle:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.sidebar-toggle svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* ---------- Sidebar Sections ---------- */
+.sidebar-section {
+  margin-bottom: 4px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 16px;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: color var(--transition-fast);
+  user-select: none;
+}
+
+.section-header:hover {
+  color: var(--text-secondary);
+}
+
+.section-header .collapse-icon {
+  width: 12px;
+  height: 12px;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.section-header.collapsed .collapse-icon {
+  transform: rotate(-90deg);
+}
+
+/* ---------- Section Content ---------- */
+.section-content {
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.section-content.collapsed {
+  max-height: 0 !important;
+}
+
+/* ---------- Sidebar Items ---------- */
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 16px 6px 24px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 13px;
+  border-radius: 0;
+  transition: all var(--transition-fast);
+  /* no accent rail on selection anywhere: the tint carries the active state.
+     The 2px transparent border stays because removing it shifts every label
+     2px left and breaks the shared text axis. */
+  border-left: 2px solid transparent;
+  position: relative;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebar-item:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.sidebar-item.active {
+  background: var(--accent-dim);
+  color: var(--accent-ink);
+}
+
+/* ---------- Sidebar Item Icon ---------- */
+.sidebar-item-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-item-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ---------- Close Tab Button ---------- */
+.sidebar-item .close-tab-btn {
+  opacity: 0;
+  margin-left: auto;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: none;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.sidebar-item:hover .close-tab-btn {
+  opacity: 1;
+}
+
+.sidebar-item .close-tab-btn:hover {
+  background: var(--bg-elevated);
+  color: var(--error);
+}
+
+/* ---------- Sidebar Divider ---------- */
+.sidebar-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 8px 16px;
+}
+
+/* ---------- Sidebar Footer ---------- */
+.sidebar-footer {
+  margin-top: auto;
+  padding: 8px 0;
+  border-top: 1px solid var(--border-color);
+}
+
+/* ---------- Sidebar Badge ---------- */
+.sidebar-badge {
+  font-size: 10px;
+  background: var(--accent-dim);
+  color: var(--accent-ink);
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-left: auto;
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
+/* ---------- Open Tabs List ---------- */
+.open-tabs-list {
+  list-style: none;
+}
+
+/* ---------- Sidebar Label ---------- */
+.sidebar-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Collapsed Sidebar: Center Icons ---------- */
+body.sidebar-collapsed #sidebar:not(.peek) .sidebar-item {
+  padding: 10px 0;
+  justify-content: center;
+  /* no border here: a 2px left border shifts the content box 1px right of the
+     borderless footer button, knocking the column off a shared axis */
+  border-left: none;
+}
+
+
+
+body.sidebar-collapsed #sidebar:not(.peek) .sidebar-toggle {
+  justify-content: center;
+  padding: 8px;
+}
+
+body.sidebar-collapsed #sidebar:not(.peek) .section-header {
+  justify-content: center;
+  padding: 6px 0;
+}
+
+body.sidebar-collapsed #sidebar:not(.peek) .sidebar-divider {
+  margin: 8px 8px;
+}
+
+body.sidebar-collapsed #sidebar:not(.peek) .sidebar-badge {
+  display: none;
+}
+
+body.sidebar-collapsed #sidebar:not(.peek) .close-tab-btn {
+  display: none;
+}
+
+body.sidebar-collapsed #sidebar:not(.peek) .sidebar-footer {
+  padding: 8px 4px;
+}
+
+/* ---------- Unpin Button ---------- */
+.sidebar-item .unpin-btn {
+  opacity: 0;
+  margin-left: auto;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: none;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.sidebar-item:hover .unpin-btn {
+  opacity: 1;
+}
+
+.sidebar-item .unpin-btn:hover {
+  background: var(--bg-elevated);
+  color: var(--error);
+}
+
+body.sidebar-collapsed #sidebar:not(.peek) .unpin-btn {
+  display: none;
+}
+
+/* ---------- Pin Button (on Quick Links) ---------- */
+.sidebar-item .pin-btn {
+  opacity: 0;
+  margin-left: auto;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: none;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.sidebar-item:hover .pin-btn {
+  opacity: 1;
+}
+
+.sidebar-item .pin-btn:hover {
+  background: var(--accent-dim);
+  color: var(--accent-ink);
+}
+
+body.sidebar-collapsed #sidebar:not(.peek) .pin-btn {
+  display: none;
+}
+
+/* =============================================================================
+   Sidebar v2 — Arc-style peek, footer collapse, animation + polish pass
+   These rules come last so they win over the originals above.
+   ============================================================================= */
+
+:root {
+  --sb-ease: cubic-bezier(0.32, 0.72, 0, 1);   /* soft, slightly overshooting */
+  --sb-w: 260px;
+  --sb-rail: 60px;
+}
+
+/* ── Hover-to-expand ─────────────────────────────────────────────────────────
+   Hovering the collapsed rail docks the REAL sidebar open — it widens 60→260px
+   and pushes the page, exactly like clicking the collapse button. Not a floating
+   preview overlay. Leaving collapses it back. The class toggling is in JS; this
+   width transition (snappy, no overshoot) is what animates it, and #sidebar's
+   own overflow:hidden reveals the labels as it grows. */
+#sidebar {
+  transition: width 0.2s cubic-bezier(0.33, 0, 0.2, 1);
+  will-change: width;
+}
+
+/* Labels fade + slide rather than display:none, so the reveal is animatable */
+.sidebar-label,
+.section-header-text,
+.sidebar-count,
+.sidebar-badge {
+  max-width: 220px;
+  transition: opacity 0.16s ease, max-width 0.19s cubic-bezier(0.33, 0, 0.2, 1);
+}
+/* In the rail the icon must be the ONLY flex child. A zero-width label still
+   contributes its `gap`, which pushed every icon ~5px left of centre — and the
+   Notes row, with a hidden count badge as a second child, ate two gaps and sat
+   12px off. Remove them from layout entirely and zero the gap. */
+body.sidebar-collapsed #sidebar:not(.peek) .sidebar-label,
+body.sidebar-collapsed #sidebar:not(.peek) .section-header-text,
+body.sidebar-collapsed #sidebar:not(.peek) .sidebar-count {
+  display: none;
+}
+body.sidebar-collapsed #sidebar:not(.peek) .sidebar-item {
+  gap: 0;
+  margin-left: 8px;
+  margin-right: 8px;
+}
+/* Footer controls share the same 8px inset so every glyph lands on one axis */
+body.sidebar-collapsed #sidebar:not(.peek) .sidebar-footer {
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 8px 10px;
+}
+body.sidebar-collapsed #sidebar:not(.peek) .sidebar-footer .sidebar-item {
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+body.sidebar-collapsed #sidebar:not(.peek) .sidebar-collapse-btn {
+  width: 100%;
+}
+body.sidebar-collapsed #sidebar.peek .sidebar-label,
+body.sidebar-collapsed #sidebar.peek .section-header-text {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+body.sidebar-collapsed #sidebar:not(.peek) .section-header { display: flex; }
+body.sidebar-collapsed #sidebar.peek .sidebar-item { justify-content: flex-start; }
+body.sidebar-collapsed #sidebar:not(.peek) .sidebar-count,
+body.sidebar-collapsed #sidebar:not(.peek) .sidebar-newtab-btn,
+body.sidebar-collapsed #sidebar:not(.peek) .collapse-icon { opacity: 0; }
+body.sidebar-collapsed #sidebar.peek .sidebar-count,
+body.sidebar-collapsed #sidebar.peek .sidebar-newtab-btn,
+body.sidebar-collapsed #sidebar.peek .collapse-icon { opacity: 1; }
+
+/* ── Rows ────────────────────────────────────────────────────────────────── */
+.sidebar-item {
+  position: relative;
+  gap: 10px;
+  padding: 7px 10px;
+  margin: 1px 8px;
+  border-radius: 9px;
+  transition: background 0.16s var(--sb-ease), color 0.16s var(--sb-ease);
+}
+.sidebar-item:hover { background: rgba(255, 255, 255, 0.055); }
+.sidebar-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  flex-shrink: 0;
+  transition: transform 0.18s var(--sb-ease), color 0.16s var(--sb-ease);
+}
+.sidebar-item-icon svg { width: 16px; height: 16px; }
+.sidebar-item:hover .sidebar-item-icon { transform: scale(1.12); }
+.sidebar-item:active { transform: scale(0.985); }
+
+.sidebar-item.active { background: var(--accent-dim); color: var(--accent-ink); }
+@keyframes sb-rail { to { height: 62%; } }
+
+.sidebar-count {
+  margin-left: auto;
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Section headers ─────────────────────────────────────────────────────── */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px 5px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.16s var(--sb-ease);
+}
+.section-header:hover { color: var(--text-secondary); background: none; }
+.section-header .collapse-icon {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
+  order: -1;                                    /* chevron leads the label */
+  transition: transform 0.24s var(--sb-ease), opacity 0.2s var(--sb-ease);
+}
+.section-header.collapsed .collapse-icon { transform: rotate(-90deg); }
+.section-header-text { flex: 1; }
+
+.sidebar-newtab-btn {
+  width: 19px;
+  height: 19px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s var(--sb-ease);
+}
+.sidebar-newtab-btn svg { width: 12px; height: 12px; }
+.sidebar-newtab-btn:hover { color: var(--accent-ink); background: var(--accent-dim); transform: scale(1.12) rotate(90deg); }
+
+/* Height animation instead of a hard show/hide */
+.section-content {
+  overflow: hidden;
+  max-height: 60vh;
+  opacity: 1;
+  transition: max-height 0.3s var(--sb-ease), opacity 0.2s var(--sb-ease);
+}
+.section-content.collapsed { max-height: 0; opacity: 0; }
+
+.sidebar-divider {
+  height: 1px;
+  margin: 7px 14px;
+  background: var(--border-color);
+  opacity: 0.5;
+}
+
+/* ── Footer: Settings left, collapse right ───────────────────────────────── */
+.sidebar-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding: 8px 8px 10px;
+  border-top: 1px solid var(--border-color);
+}
+.sidebar-footer .sidebar-item { flex: 1; margin: 0; }
+.sidebar-collapse-btn {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 9px;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: background 0.16s ease, color 0.16s ease, transform 0.24s var(--sb-ease);
+}
+.sidebar-collapse-btn svg { width: 16px; height: 16px; }
+.sidebar-collapse-btn:hover { background: rgba(255,255,255,0.07); color: var(--text-primary); }
+body.sidebar-collapsed .sidebar-collapse-btn { transform: rotate(180deg); }
+/* Collapsed rail: the footer stacks so both controls stay reachable */
+body.sidebar-collapsed #sidebar:not(.peek) .sidebar-footer { flex-direction: column; gap: 2px; }
+body.sidebar-collapsed #sidebar.peek .sidebar-footer { flex-direction: row; gap: 6px; }
+
+/* ── Empty states ────────────────────────────────────────────────────────── */
+.sidebar-empty {
+  padding: 10px 16px 12px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text-tertiary);
+}
+.sidebar-empty b {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 1px;
+}
+body.sidebar-collapsed #sidebar:not(.peek) .sidebar-empty { display: none; }
+body.sidebar-collapsed #sidebar.peek .sidebar-empty { display: block; }
+
+/* ── Tab hover preview ("genie") ─────────────────────────────────────────── */
+#tab-peek {
+  position: fixed;
+  z-index: 9999;
+  width: 232px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+  transform-origin: left center;                /* grows out of the hovered tab */
+  animation: genie 0.22s var(--sb-ease);
+  will-change: transform, opacity;
+}
+@keyframes genie {
+  from { opacity: 0; transform: scale(0.72) translateX(-14px) skewX(-5deg); }
+  60%  { opacity: 1; }
+  to   { opacity: 1; transform: none; }
+}
+#tab-peek .peek-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+#tab-peek .peek-url {
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#tab-peek .peek-shot {
+  margin-top: 8px;
+  width: 100%;
+  border-radius: 7px;
+  display: block;
+  background: var(--bg-tertiary);
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #sidebar, #sidebar .sidebar-inner, .sidebar-item, .sidebar-item-icon,
+  .section-content, .collapse-icon, .sidebar-label, #tab-peek {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+
+/* ── Per-tab audio badge ───────────────────────────────────────────────────
+   Sits at the right edge of a tab row. Visible only while the tab is making
+   sound or is muted, so the sidebar stays quiet the rest of the time. */
+.sidebar-item .tab-audio {
+  flex: 0 0 auto;
+  width: 20px; height: 20px;
+  /* The label already takes the slack, so no margin-left:auto here — that is
+     what put this on top of the close button. */
+  margin-left: 2px;
+  display: grid; place-items: center;
+  border: 0; border-radius: 5px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+}
+.sidebar-item .tab-audio svg { width: 13px; height: 13px; }
+.sidebar-item .tab-audio:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+.sidebar-item .tab-audio.muted { color: var(--text-tertiary); }
+.sidebar-item .tab-audio.muted:hover { color: var(--text-primary); }
+
+.sidebar-item .tab-audio[hidden] { display: none; }
+
+/* ── Tab groups ────────────────────────────────────────────────────────────
+   A group reads as a coloured band with its tabs indented beneath it. The
+   colour is carried on --group-color so the band and every member tab stay in
+   agreement from one place. */
+.tab-group-head {
+  display: flex; align-items: center; gap: 7px;
+  margin: 6px 0 2px;
+  padding: 4px 8px;
+  border-radius: 7px;
+  cursor: pointer;
+  user-select: none;
+  background: color-mix(in srgb, var(--group-color) 14%, transparent);
+}
+.tab-group-head:hover { background: color-mix(in srgb, var(--group-color) 22%, transparent); }
+
+.tab-group-head .tg-chevron {
+  display: grid; place-items: center;
+  width: 12px; height: 12px; flex: 0 0 auto;
+  color: var(--group-color);
+  transform: rotate(90deg);
+  transition: transform 120ms ease;
+}
+.tab-group-head.collapsed .tg-chevron { transform: rotate(0deg); }
+.tab-group-head .tg-chevron svg { width: 10px; height: 10px; }
+
+.tab-group-head .tg-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--group-color); flex: 0 0 auto;
+}
+.tab-group-head .tg-name {
+  flex: 1 1 auto; min-width: 0;
+  font-size: 11.5px; font-weight: 620;
+  color: var(--group-color);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.tab-group-head .tg-count {
+  flex: 0 0 auto;
+  font-size: 10.5px; color: var(--group-color); opacity: 0.75;
+}
+
+/* Member tabs: indented, with the group's colour as a spine down the left. */
+.sidebar-item.in-group {
+  margin-left: 10px;
+  border-left: 2px solid var(--group-color);
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
+}
+
+/* Colour picker inside the group context menu. */
+.tg-colors { display: flex; gap: 6px; padding: 7px 12px; }
+.tg-color {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid transparent; cursor: pointer; padding: 0;
+}
+.tg-color.on { border-color: var(--text-primary); }
+.tg-color:hover { transform: scale(1.12); }
+
+@media (prefers-reduced-motion: reduce) {
+  .tab-group-head .tg-chevron { transition: none; }
+}
+
+/* Inline group rename, sized to sit exactly where the label was. */
+.tab-group-head .tg-rename {
+  flex: 1 1 auto; min-width: 0;
+  height: 17px; padding: 0 3px;
+  border: 1px solid var(--group-color);
+  border-radius: 4px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font: inherit; font-size: 11.5px; font-weight: 620;
+}
+.tab-group-head .tg-rename:focus { outline: none; }
+
+/* Members of a collapsed group. A class rather than the `hidden` attribute,
+   which .sidebar-item's own display rule would override. */
+.sidebar-item.group-collapsed { display: none !important; }
