@@ -1,0 +1,363 @@
+/* ============================================
+   Local Mind Browser — Layout
+   ============================================ */
+
+/* ---------- App Shell ---------- */
+#app {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-primary);
+}
+
+/* ---------- Top Bar ---------- */
+#top-bar {
+  height: 44px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 12px 0 78px; /* 78px offset for macOS traffic lights */
+  -webkit-app-region: drag;
+  background: var(--bg-primary);
+  /* No backdrop-filter here. --bg-primary is fully opaque, so not one pixel of
+     a blurred backdrop could ever show through it — but Chromium still has to
+     build and re-read a full-width backdrop layer for the whole title bar on
+     every frame that touches it. It was pure cost for no visual effect. */
+  border-bottom: 1px solid var(--border-color);
+  /* Inner edge only, as with the sidebar and AI panel: the bottom is the side
+     facing the page, the top sits against the window frame which macOS already
+     rounds for us. */
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  z-index: 100;
+  gap: 8px;
+}
+
+#top-bar > * {
+  -webkit-app-region: no-drag;
+}
+
+/* Windows/Linux: the native caption buttons sit top-right under
+   titleBarOverlay, so move the reserved space to that side. */
+body.platform-win #top-bar,
+body.platform-linux #top-bar {
+  padding: 0 148px 0 12px;
+}
+
+/* ---------- Main Content ---------- */
+#main-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ---------- Sidebar ---------- */
+/* One easing for every panel in the chrome, so the sidebar and the AI panel
+   move like parts of the same app. The curve starts fast and settles gently —
+   the shape Arc uses — which reads as "instant" far more than a symmetric ease
+   of the same duration does. */
+:root {
+  --sb-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --sb-dur: 0.2s;
+}
+
+#sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  background: var(--bg-primary);
+  border-right: 1px solid var(--border-color);
+  /* Inner edge only, the way Arc softens where the sidebar meets the page.
+     The outer edge stays square because it sits against the window frame. */
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  transition: width var(--sb-dur) var(--sb-ease);
+  overflow: hidden;
+  position: relative;
+  /* Isolate the bookmark list from the width animation. Without this the
+     browser re-lays-out every row on every frame, which is what made the
+     docked animation stutter on a long bookmark list.
+     Layout only, deliberately: `paint` containment clips to the border box, and
+     in auto-hide mode that box is 0px wide — the panel slid open correctly and
+     was clipped to nothing, which measures as working and looks broken. */
+  contain: layout;
+}
+
+body.sidebar-collapsed #sidebar {
+  width: 60px;
+}
+
+body.sidebar-collapsed #sidebar:not(.peek) .sidebar-label,
+body.sidebar-collapsed #sidebar:not(.peek) .section-header-text {
+  display: none;
+}
+
+/* Hide section headers in collapsed mode, but keep content */
+body.sidebar-collapsed #sidebar:not(.peek) .section-header {
+  display: none;
+}
+
+/* Hide dividers in collapsed mode */
+body.sidebar-collapsed #sidebar:not(.peek) .sidebar-divider {
+  margin: 4px 8px;
+}
+
+/* Hide the empty hint in collapsed mode */
+body.sidebar-collapsed #sidebar:not(.peek) .sidebar-empty-hint {
+  display: none;
+}
+
+/* Hide bookmarks section in collapsed mode (too many items) */
+body.sidebar-collapsed #sidebar:not(.peek) #bookmarks-section {
+  display: none !important;
+}
+
+body.sidebar-collapsed #sidebar:not(.peek) .sidebar-item {
+  justify-content: center;
+  padding: 8px;
+}
+
+body.sidebar-collapsed #sidebar:not(.peek) .sidebar-item-icon {
+  margin: 0;
+}
+
+/* ---------- Browser Viewport ---------- */
+#browser-viewport {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* ---------- Tab Bar ---------- */
+#tab-bar {
+  height: 38px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0 8px;
+}
+
+#tab-bar::-webkit-scrollbar {
+  height: 0;
+}
+
+/* ---------- Webview Container ---------- */
+#webview-container {
+  flex: 1;
+  position: relative;
+  background: var(--bg-base);
+  /* The corners that actually read. Rounding the chrome alone is invisible:
+     behind a dark panel's rounded corner is more dark chrome, so there is no
+     edge to see. The PAGE is the contrasting surface, so curving it away at the
+     top is what shows — against a white or orange site the chrome behind it is
+     suddenly obvious. */
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  overflow: hidden;
+}
+
+/* A webview composites on its own layer and does not reliably inherit an
+   ancestor's clip, so it carries the same radius directly. */
+#webview-container webview,
+#webview-container #new-tab-page {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+#webview-container webview {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background-color: #ffffff;
+}
+
+/* ---------- New Tab Page ---------- */
+/* Positioning only — the internal layout lives in ntp.css, which owns the
+   centred-hero / scrollable-history contract. */
+#new-tab-page {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-base);
+  z-index: 1;
+}
+
+/* ---------- AI Panel ---------- */
+#ai-panel {
+  width: 380px;
+  flex-shrink: 0;
+  background: var(--bg-primary);
+  border-left: 1px solid var(--border-color);
+  /* Inner edge only, mirroring the sidebar: the side facing the page is
+     softened, the outer side stays square against the window frame. */
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  transition: width var(--sb-dur) var(--sb-ease);
+  overflow: hidden;
+  position: relative;
+  contain: layout;
+}
+
+/* Same reason as the sidebar: the rail floats outside the element's box. */
+body.ai-panel-rail #ai-panel { contain: none; }
+
+body.ai-panel-hidden #ai-panel {
+  width: 0;
+  border: 0;
+  overflow: hidden;
+}
+
+/* ---------- Resize Handles ---------- */
+.resize-handle {
+  width: 4px;
+  cursor: col-resize;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 10;
+  transition: background var(--transition-fast);
+}
+
+.resize-handle:hover,
+.resize-handle:active {
+  background: var(--accent-dim);
+}
+
+#ai-panel .resize-handle {
+  left: 0;
+}
+
+#sidebar .resize-handle {
+  right: 0;
+}
+
+/* ── Focus mode ───────────────────────────────────────────────────────────── */
+/* Collapses the chrome so the page owns the whole window. Width/height rather
+   than display:none, so the panels animate back instead of snapping. */
+body.focus-mode #sidebar {
+  width: 0;
+  min-width: 0;
+  border-right-width: 0;
+}
+body.focus-mode #top-bar {
+  height: 0;
+  min-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+  border-bottom-width: 0;
+}
+body.focus-mode #sidebar,
+body.focus-mode #top-bar {
+  transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+              height 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Pointer against an edge brings that piece back, for as long as it stays. */
+body.focus-mode.focus-peek-left #sidebar { width: 260px; min-width: 260px; }
+body.focus-mode.focus-peek-top #top-bar { height: 44px; min-height: 44px; }
+
+/* The strips that trigger it. Transparent, and above the page so they still
+   register once a site has painted over the area. */
+.focus-zone {
+  position: fixed;
+  z-index: 8000;
+  background: transparent;
+}
+.focus-zone-top { top: 0; left: 0; right: 0; height: 5px; }
+.focus-zone-left { top: 0; bottom: 0; left: 0; width: 5px; }
+
+/* macOS keeps its traffic lights over the top-left, so leave that corner alone:
+   the reveal strip must not sit on top of the close button. */
+body.focus-mode .focus-zone-top { left: 78px; }
+body.focus-mode .focus-zone-left { top: 44px; }
+
+/* ── Sidebar: auto-hide (rail) ────────────────────────────────────────────── */
+/* The same construction the AI panel uses. The point is that the sidebar stops
+   being part of the layout: it floats over the content, so opening and closing
+   it never re-lays-out the bookmark list or resizes the webview underneath.
+   That reflow is what made the docked animation feel heavy — the browser was
+   doing real layout work on every frame, not just painting. */
+#sidebar-hotzone {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 6px;
+  z-index: 55;
+  display: none;
+}
+body.sidebar-rail #sidebar-hotzone { display: block; }
+
+body.sidebar-rail #sidebar {
+  width: 0;
+  min-width: 0;
+  border: 0;
+  overflow: visible;
+  z-index: 60;
+  /* Nothing to contain once it is out of the layout, and containment here would
+     clip the floating panel. */
+  contain: none;
+}
+/* Slides on TRANSFORM, never on width.
+   Animating width meant a layout pass on every single frame — the panel, its
+   bookmark list, and the clipping box all re-measured 60 times a second — which
+   is what made this stutter. A transform is handled by the compositor: no
+   layout, no paint, no webview resize. The panel is always its full width and
+   simply sits off-screen until it is wanted.
+   The extra 2px parks the right border fully out of view; at exactly -100% its
+   1px edge lands on x=0 and shows as a hairline down the screen. */
+body.sidebar-rail #sidebar .sidebar-inner {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--sb-w, 260px);
+  background: var(--bg-primary);
+  border-right: 1px solid var(--border-color);
+  z-index: 60;
+  /* Two chained translations rather than calc() inside translate3d(): Chromium
+     drops that as invalid, which left the panel sitting at identity — open. */
+  transform: translateX(-100%) translateX(-2px);
+  transition: transform var(--sb-dur) var(--sb-ease);
+  will-change: transform;
+  /* Same rounded inner edge as the docked sidebar. In auto-hide it is this
+     element that is actually on screen, not #sidebar, so the radius has to be
+     set here as well or it only appears in one of the two modes. */
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+body.sidebar-rail #sidebar.peek .sidebar-inner {
+  transform: translateX(0);
+  box-shadow: 20px 0 60px rgba(0, 0, 0, 0.5);
+}
+/* Over a wallpaper the auto-hidden sidebar must NOT use backdrop-filter.
+   The docked sidebar sits beside the content, so its backdrop is the wallpaper.
+   This one floats ON TOP of the page, so the same filter frosts the website
+   instead — a GitHub nav bar was legible straight through the bookmark list.
+   A near-opaque panel is the honest answer: it is a list you have to read. */
+body.ntp-has-wallpaper.sidebar-rail #sidebar .sidebar-inner {
+  background: rgba(12, 14, 18, 0.96);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-color: rgba(0, 0, 0, 0.55);
+}
+/* The resize handle has nothing to resize when the sidebar is auto-hidden. */
+body.sidebar-rail #sidebar .resize-handle { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  body.sidebar-rail #sidebar .sidebar-inner { transition: none; }
+}
