@@ -1,0 +1,726 @@
+/* ============================================
+   Local Mind Browser — AI Panel
+   ============================================ */
+
+/* ---------- AI Panel Header ---------- */
+.ai-panel-header {
+  /* anchors the past-conversations popover */
+  position: relative;
+  height: 48px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border-color);
+  gap: 12px;
+}
+
+.ai-panel-header .panel-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.ai-panel-header .model-select {
+  flex: 1;
+  min-width: 0;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  color: var(--text-primary);
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.ai-panel-header .model-select:focus {
+  border-color: var(--border-focus);
+}
+
+.ai-panel-header .close-panel-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.ai-panel-header .close-panel-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.ai-panel-header .close-panel-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ---------- AI Mode Tabs ---------- */
+.ai-mode-tabs {
+  display: flex;
+  height: 36px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border-color);
+  overflow-x: auto;
+}
+
+.ai-mode-tabs::-webkit-scrollbar {
+  height: 0;
+}
+
+.ai-mode-tab {
+  flex-shrink: 0;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  font-family: inherit;
+}
+
+.ai-mode-tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+}
+
+.ai-mode-tab.active {
+  color: var(--accent-ink);
+  border-bottom-color: var(--accent);
+}
+
+.ai-mode-tab .tab-emoji {
+  font-size: 14px;
+}
+
+/* ---------- Chat Container ---------- */
+#chat-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ---------- AI Empty State ---------- */
+.ai-empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--text-tertiary);
+  gap: 12px;
+  padding: 32px 16px;
+}
+
+.ai-empty-state .empty-icon {
+  font-size: 48px;
+  opacity: 0.5;
+}
+
+.ai-empty-state .empty-title {
+  font-size: 16px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.ai-empty-state .empty-desc {
+  font-size: 13px;
+  max-width: 260px;
+  line-height: 1.5;
+  /* was inheriting tertiary, which sat at 2.4:1 once a bright page showed
+     through the glass behind it */
+  color: var(--text-secondary);
+}
+
+/* ---------- Quick Actions ---------- */
+.quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.quick-action-chip {
+  padding: 5px 12px;
+  font-size: 11px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.quick-action-chip:hover {
+  background: var(--accent-dim);
+  color: var(--accent-ink);
+  border-color: rgba(43, 212, 115, 0.3);
+}
+
+/* ---------- AI Input Area ---------- */
+.ai-input-area {
+  flex-shrink: 0;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.ai-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+#ai-input {
+  flex: 1;
+  resize: none;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 13px;
+  min-height: 38px;
+  max-height: 120px;
+  outline: none;
+  transition: border-color 0.2s ease;
+  line-height: 1.5;
+}
+
+#ai-input:focus {
+  border-color: var(--border-focus);
+}
+
+#ai-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* ---------- AI Buttons ---------- */
+.ai-btn {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.ai-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ai-send-btn {
+  background: var(--accent);
+  color: var(--bg-base);
+}
+
+.ai-send-btn:hover {
+  background: var(--accent-hover);
+  transform: scale(1.05);
+}
+
+.ai-send-btn:active {
+  transform: scale(0.95);
+}
+
+.ai-attach-btn,
+.ai-voice-btn {
+  background: none;
+  color: var(--text-tertiary);
+}
+
+.ai-attach-btn:hover,
+.ai-voice-btn:hover {
+  color: var(--accent-ink);
+  background: var(--accent-dim);
+}
+
+.ai-voice-btn.listening {
+  color: var(--accent-ink);
+  animation: breathe 2s infinite;
+}
+
+/* ---------- Memory Indicator ---------- */
+.memory-indicator {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  padding: 4px 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.memory-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--agent-researcher);
+  flex-shrink: 0;
+}
+
+/* =============================================================================
+   AI panel — edge auto-hide (right screen edge reveals the FULL panel)
+   When appearance.aiPanelHover is on, closing the panel hides it entirely (no
+   rail). Pushing the cursor to the right edge slides the full, opaque panel in.
+   Reuses --sb-ease from sidebar.css.
+   ============================================================================= */
+:root { --ai-w: 380px; }
+
+/* Content wrapper: the layer that slides in over the page */
+.ai-panel-inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+.ai-rail-tab { display: none !important; }
+
+/* Invisible hot-zone pinned to the right edge; only live while auto-hidden */
+#ai-hotzone {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  width: 6px;
+  z-index: 55;
+  display: none;
+}
+body.ai-panel-rail #ai-hotzone { display: block; }
+
+/* Auto-hidden: the panel occupies no width; its content floats, parked closed */
+body.ai-panel-rail #ai-panel {
+  width: 0;
+  border: 0;
+  overflow: visible;
+  z-index: 60;
+}
+body.ai-panel-rail #ai-panel .ai-panel-inner {
+  position: absolute;
+  top: 0; bottom: 0; right: 0;
+  width: 0;
+  overflow: hidden;
+  /* In auto-hide this element is the one on screen, not #ai-panel, so the
+     radius has to be set here too or it only appears when docked. */
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+  /* Frosted, matching the docked panel. These used to differ: the docked panel
+     was translucent while the hover rail forced itself opaque, so the same
+     panel looked like two different components depending on how you opened it. */
+  /* matches #sidebar exactly: solid base, frosted only over a wallpaper */
+  background: var(--bg-primary);
+  border-left: 1px solid var(--border-color);
+  z-index: 60;
+  transition: width var(--sb-dur) var(--sb-ease);
+  will-change: width;
+}
+/* Keep content at full width so revealing it never reflows the chat */
+body.ai-panel-rail #ai-panel .ai-panel-inner > * {
+  width: var(--ai-w);
+  flex-shrink: 0;
+}
+body.ai-panel-rail #ai-panel:not(.peek) .ai-panel-inner > * { opacity: 0; }
+body.ai-panel-rail #ai-panel.peek .ai-panel-inner {
+  width: var(--ai-w);
+  box-shadow: -20px 0 60px rgba(0, 0, 0, 0.5);
+}
+/* Over a wallpaper it uses exactly the docked panel's frosting, so opening by
+   hover and opening from the toolbar are visually identical. */
+/* The hover panel floats ABOVE the webview, so backdrop-filter would frost the
+   website rather than the wallpaper, and the panel would change appearance on
+   every site. The sidebar never has this problem: it sits beside the content
+   with the fixed wallpaper layer directly behind it.
+
+   To copy that, the panel re-draws the same wallpaper itself, in a fixed
+   full-viewport pseudo-element clipped to the panel, so it lines up with the
+   real one pixel for pixel and looks identical on every page. */
+/* The tint lives on ::after, NOT on the element's own background.
+   Inside a stacking context the paint order is: element background, then
+   negative z-index children, then content. With the tint on the background and
+   the wallpaper on a z-index:-1 ::before, the wallpaper painted straight over
+   the tint — so the panel stayed a bright wash no matter how opaque the tint
+   got, and only the brightness() in the filter was doing anything. Two
+   pseudo-elements at the same z-index paint in source order instead, which is
+   how the docked panel has always done it. */
+body.ntp-has-wallpaper.ai-panel-rail #ai-panel .ai-panel-inner {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-color: rgba(0, 0, 0, 0.55);
+  isolation: isolate;
+}
+body.ntp-has-wallpaper.ai-panel-rail #ai-panel .ai-panel-inner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  /* Same tint as the docked panel, so hover and toolbar open look identical. */
+  background: rgba(14, 16, 20, 0.93);
+}
+body.ntp-has-wallpaper.ai-panel-rail #ai-panel .ai-panel-inner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: var(--ntp-wallpaper-image);
+  /* attachment:fixed anchors the image to the VIEWPORT, so it lands in exactly
+     the same place as the real wallpaper layer and the two line up. position:
+     fixed can't be used here: .ai-panel-inner sets will-change, which makes it
+     a containing block, so a fixed child would resolve against the panel and
+     the image would be scaled to the panel's width instead. */
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center;
+  /* Dimmed and desaturated to match the docked panel. At saturate(1.7) a
+     colourful wallpaper turned the panel into a bright teal wash. */
+  filter: blur(48px) saturate(0.9) brightness(0.72);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.ai-panel-rail #ai-panel .ai-panel-inner,
+  body.ai-panel-rail #ai-panel .ai-panel-inner > * { transition: none !important; }
+}
+
+/* Expanded panel: same glass as the sidebar, built the same way the rail builds
+   it. ::before paints the wallpaper (viewport-anchored, so it lines up with the
+   real layer pixel for pixel) and ::after lays the tint over it. Both sit at
+   z-index -1, so they paint in source order: wallpaper, then tint, then the
+   panel's content on top. */
+body.ntp-has-wallpaper:not(.ai-panel-rail) #ai-panel {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-color: rgba(0, 0, 0, 0.55);
+  isolation: isolate;
+}
+body.ntp-has-wallpaper:not(.ai-panel-rail) #ai-panel::before,
+body.ntp-has-wallpaper:not(.ai-panel-rail) #ai-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+body.ntp-has-wallpaper:not(.ai-panel-rail) #ai-panel::before {
+  background-image: var(--ntp-wallpaper-image);
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center;
+  /* Less saturation than the sidebar's filter on purpose. The sidebar sits over
+     the dark edge of the wallpaper; the panel sits over the middle, which is
+     often the bright part of a photo. Matching the sidebar's numbers made the
+     panel glow orange next to a near-black sidebar. */
+  /* Heavier blur and desaturation than the sidebar's. The sidebar sits over the
+     dark edge of the wallpaper; the panel sits over the middle, which on a photo
+     is usually the bright part. */
+  filter: blur(48px) saturate(0.9) brightness(0.72);
+}
+body.ntp-has-wallpaper:not(.ai-panel-rail) #ai-panel::after {
+  /* Readability wins over the glass effect. At 0.82 the wallpaper still showed
+     through hard enough that chat text was a struggle on a bright image, which
+     defeats the point of a panel you are meant to read. This keeps a hint of the
+     wallpaper's colour without ever competing with the text on top of it. */
+  background: rgba(14, 16, 20, 0.93);
+}
+
+/* ── Agent mode ───────────────────────────────────────────────────────────── */
+.ai-agent-btn.active { color: var(--accent-ink); background: var(--accent-dim); }
+
+.agent-run {
+  margin: 10px 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+}
+.agent-run.done { border-color: var(--accent-dim); }
+.agent-run.failed { border-color: rgba(224, 92, 92, 0.45); }
+
+.agent-run-head { display: flex; align-items: center; gap: 8px; }
+.agent-run-title { font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
+.agent-run-task {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin: 3px 0 9px;
+  line-height: 1.45;
+}
+
+.agent-spinner {
+  width: 12px; height: 12px;
+  border: 2px solid var(--border-color);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: agent-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes agent-spin { to { transform: rotate(360deg); } }
+
+.agent-steps { display: flex; flex-direction: column; gap: 6px; }
+.agent-step {
+  display: flex;
+  gap: 9px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: var(--bg-tertiary);
+  opacity: 0.55;
+  transition: opacity 0.2s ease, background 0.2s ease;
+}
+.agent-step.active { opacity: 1; background: var(--accent-dim); }
+.agent-step.completed { opacity: 1; }
+.agent-step.error { opacity: 1; background: rgba(224, 92, 92, 0.12); }
+.agent-step-icon { font-size: 13px; line-height: 1.4; flex-shrink: 0; }
+.agent-step-body { min-width: 0; flex: 1; }
+.agent-step-action { font-size: 12px; color: var(--text-primary); font-weight: 500; }
+.agent-step-detail {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 1px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+/* Context-aware suggestions in the empty state */
+#ai-suggestions { display: flex; flex-direction: column; gap: 7px; margin-top: 18px; width: 100%; }
+.ai-sug-ctx { font-size: 11.5px; color: var(--text-tertiary); margin-bottom: 3px; }
+.ai-sug-ctx b { color: var(--text-secondary); font-weight: 600; }
+.ai-sug {
+  text-align: left; padding: 9px 12px; border-radius: 10px;
+  background: var(--bg-secondary); border: 1px solid var(--border-color);
+  color: var(--text-secondary); font-family: inherit; font-size: 12.5px; cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.ai-sug:hover { border-color: var(--accent-dim); color: var(--text-primary); }
+/* Finished runs collapse to a single line; click the header to expand */
+.agent-run.collapsed .agent-steps,
+.agent-run.collapsed .agent-run-task { display: none; }
+.agent-run.collapsed { padding: 9px 14px; }
+/* Which sites were read is the one detail worth seeing without expanding. */
+.agent-run.collapsed .agent-sources.always-on { display: flex; margin-top: 8px; }
+.agent-run.done .agent-run-head,
+.agent-run.failed .agent-run-head { cursor: pointer; }
+
+.agent-run-meta {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+.agent-run-chevron {
+  width: 14px; height: 14px;
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  opacity: 0;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+/* Only a finished card can be expanded, so only it advertises the affordance. */
+.agent-run.done .agent-run-chevron,
+.agent-run.failed .agent-run-chevron { opacity: 1; }
+.agent-run:not(.collapsed) .agent-run-chevron { transform: rotate(180deg); }
+.agent-run-meta:empty { display: none; }
+
+/* ── Sources consulted ────────────────────────────────────────────────────── */
+.agent-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 9px;
+}
+.agent-sources:empty { display: none; }
+.agent-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 4px 9px 4px 5px;
+  border-radius: 999px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 11px;
+  text-decoration: none;
+  transition: border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+.agent-source:hover {
+  border-color: var(--accent-dim);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+.agent-source-host {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 150px;
+}
+/* The monogram sits underneath; a loaded favicon covers it, and a failed one
+   removes itself so the letter shows through. */
+.agent-source-mark {
+  position: relative;
+  width: 16px; height: 16px;
+  flex-shrink: 0;
+  border-radius: 5px;
+  overflow: hidden;
+  background: var(--accent-dim);
+  color: var(--accent-ink);
+  font-size: 9px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.agent-source-mark::before { content: attr(data-letter); }
+/* Deliberately no background: a favicon with transparent padding lets the
+   green monogram show through instead of sitting on a dark square. */
+.agent-source-mark img {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+}
+
+/* ── Past conversations popover ───────────────────────────────────────────── */
+.ai-history{
+  position:absolute;top:calc(100% + 8px);right:8px;z-index:60;
+  width:min(300px,calc(100% - 16px));
+  background:var(--bg-elevated);
+  border:1px solid var(--border-color);
+  border-radius:var(--radius-lg);
+  box-shadow:0 22px 50px -16px rgba(0,0,0,.8);
+  overflow:hidden;
+  animation:aiHistIn .22s cubic-bezier(.16,1.2,.4,1) both;
+}
+@keyframes aiHistIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+
+.ai-history-head{
+  padding:11px 14px 9px;font-size:10.5px;font-weight:640;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--text-tertiary);
+  border-bottom:1px solid var(--border-color);
+}
+.ai-history-list{max-height:340px;overflow-y:auto;padding:6px}
+.ai-history-empty{padding:16px 12px;font-size:12.5px;line-height:1.5;color:var(--text-tertiary)}
+
+.ai-history-row{
+  display:flex;align-items:center;gap:9px;
+  padding:9px 10px;border-radius:9px;cursor:pointer;
+  transition:background .18s;
+}
+.ai-history-row:hover{background:var(--bg-tertiary)}
+.ai-history-title{
+  flex:1;min-width:0;font-size:13px;color:var(--text-primary);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.ai-history-date{font-size:11px;color:var(--text-tertiary);flex:none}
+.ai-history-del{
+  flex:none;width:20px;height:20px;border:none;border-radius:6px;cursor:pointer;
+  background:transparent;color:var(--text-tertiary);font-size:15px;line-height:1;
+  opacity:0;transition:opacity .18s,background .18s,color .18s;
+}
+.ai-history-row:hover .ai-history-del{opacity:1}
+.ai-history-del:hover{background:rgba(239,68,68,.16);color:#ef4444}
+
+/* ── Irreversible-action confirmation ─────────────────────────────────────── */
+/* Deliberately louder than a normal chat bubble: the run is paused waiting on
+   this, so it must not read as just another message scrolling past. */
+.agent-confirm {
+  margin: 10px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--warning);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--warning) 10%, var(--bg-secondary));
+}
+.agent-confirm-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.agent-confirm-badge {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--warning);
+  border: 1px solid color-mix(in srgb, var(--warning) 45%, transparent);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.agent-confirm-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.agent-confirm-detail {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  word-break: break-word;
+}
+.agent-confirm-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+.agent-confirm-actions button {
+  font: inherit;
+  font-size: 12.5px;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+.agent-confirm-actions button:hover { background: var(--bg-elevated); }
+.agent-confirm-yes.danger {
+  background: var(--warning);
+  border-color: var(--warning);
+  color: #1a1206;
+  font-weight: 600;
+}
+.agent-confirm-yes.danger:hover { filter: brightness(1.08); background: var(--warning); }
+.agent-confirm-outcome {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+/* Once answered it is a record, not a control — drop the alarm colouring. */
+.agent-confirm.allowed,
+.agent-confirm.blocked {
+  border-color: var(--border-color);
+  background: var(--bg-secondary);
+}
