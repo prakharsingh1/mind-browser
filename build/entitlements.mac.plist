@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- Electron needs both of these under the hardened runtime: Chromium's V8
+       compiles JavaScript at runtime, which a hardened process is otherwise
+       forbidden from doing. Without them the app is signed and then crashes on
+       launch, which is a confusing way to discover the problem. -->
+  <key>com.apple.security.cs.allow-jit</key>
+  <true/>
+  <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+  <true/>
+
+  <!-- The Widevine CDM is downloaded at runtime and loaded as an unsigned
+       library. Without this the hardened runtime refuses to load it and
+       protected video silently fails. -->
+  <key>com.apple.security.cs.disable-library-validation</key>
+  <true/>
+
+  <!-- Outbound network: every page load, and the update check. -->
+  <key>com.apple.security.network.client</key>
+  <true/>
+  <!-- Inbound: the local Tor SOCKS listener binds a loopback port. -->
+  <key>com.apple.security.network.server</key>
+  <true/>
+
+  <!-- The user picks these through a save/open dialog; without the entitlement
+       the write silently fails after they have chosen a location. -->
+  <key>com.apple.security.files.user-selected.read-write</key>
+  <true/>
+
+  <!-- Requested per site, and prompted for by the browser first. -->
+  <key>com.apple.security.device.camera</key>
+  <true/>
+  <key>com.apple.security.device.audio-input</key>
+  <true/>
+  <key>com.apple.security.personal-information.location</key>
+  <true/>
+</dict>
+</plist>
