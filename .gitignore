@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+out/
+
+# Tor Expert Bundles are fetched and checksum-verified at build time
+# by scripts/fetch-tor.js. They are ~160 MB of third-party binaries and
+# do not belong in the history.
+resources/tor/
+
+# Local runtime state
+*.log
+.DS_Store
+.env
+.env.*
