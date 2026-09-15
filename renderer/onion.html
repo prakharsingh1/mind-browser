@@ -1,0 +1,309 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Onion Mode</title>
+<style>
+  :root {
+    --bg: #0b0710;
+    --bg-2: #140d1c;
+    --bg-3: #1c1327;
+    --line: rgba(255,255,255,0.09);
+    --text: #ece7f2;
+    --dim: #9c92ab;
+    --dimmer: #6d6479;
+    --onion: #a97bf0;
+    --onion-dim: rgba(169,123,240,0.16);
+    --warn: #f0b429;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 14px -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Chrome ──────────────────────────────────────────────────────────── */
+  #bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--bg-2);
+    border-bottom: 1px solid var(--line);
+    -webkit-app-region: drag;
+    padding-left: 82px;               /* room for the traffic lights */
+    flex: 0 0 auto;
+  }
+  #bar button, #bar input { -webkit-app-region: no-drag; }
+  .nav {
+    width: 28px; height: 28px;
+    display: grid; place-items: center;
+    border: 0; border-radius: 7px;
+    background: transparent; color: var(--dim);
+    cursor: pointer; font-size: 15px;
+  }
+  .nav:hover:not(:disabled) { background: var(--bg-3); color: var(--text); }
+  .nav:disabled { opacity: 0.3; cursor: default; }
+  #url {
+    flex: 1;
+    height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--bg-3);
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+  }
+  #url::placeholder { color: var(--dimmer); }
+  #circuit {
+    -webkit-app-region: no-drag;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--dim);
+    font-size: 11.5px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  #circuit:hover { color: var(--text); border-color: var(--onion); }
+  #identity {
+    -webkit-app-region: no-drag;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--dim);
+    font-size: 11.5px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  #identity:hover { color: var(--text); border-color: var(--onion); }
+
+  /* A site offering its own onion service — the one banner worth interrupting for. */
+  #onionloc {
+    display: none;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    font-size: 12px;
+    background: var(--onion-dim);
+    color: var(--text);
+    border-bottom: 1px solid var(--line);
+  }
+  #onionloc.show { display: flex; }
+  #onionloc button {
+    border: 0; border-radius: 6px; cursor: pointer;
+    background: var(--onion); color: #1a0f2a;
+    font: inherit; font-size: 11.5px; font-weight: 650; padding: 4px 11px;
+  }
+  #onionloc .dismiss { background: transparent; color: var(--dim); font-weight: 400; }
+  #level {
+    -webkit-app-region: no-drag;
+    border: 1px solid var(--line);
+    background: var(--bg-3);
+    color: var(--text);
+    font: inherit; font-size: 11.5px;
+    padding: 5px 8px;
+    border-radius: 999px;
+    cursor: pointer;
+    outline: none;
+  }
+  #levelNote {
+    flex: 0 0 auto;
+    padding: 6px 14px;
+    font-size: 11.5px;
+    color: var(--dim);
+    background: var(--bg-2);
+    border-bottom: 1px solid var(--line);
+  }
+
+  /* ── Tor status strip ────────────────────────────────────────────────── */
+  #status {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    font-size: 12px;
+    background: var(--onion-dim);
+    color: var(--onion);
+    border-bottom: 1px solid var(--line);
+  }
+  #status.ready { background: rgba(64,192,120,0.12); color: #5fd08a; }
+  #status.failed { background: rgba(240,80,80,0.12); color: #f08080; }
+  #dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: 0 0 auto; }
+  #status.connecting #dot { animation: pulse 1.1s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: 0.25 } }
+
+  /* ── Content ─────────────────────────────────────────────────────────── */
+  /* Real letterboxing, the way Tor Browser does it.
+     The content area is quantised to a 200x100 grid and centred, with the
+     leftover space painted as inert bars. Because the viewport genuinely IS
+     the rounded size, innerWidth, clientWidth, getBoundingClientRect and CSS
+     media queries all agree — nothing has to be lied about, and there is no
+     mismatch for a page to notice. */
+  #stage {
+    flex: 1;
+    position: relative;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #05030a;
+  }
+  webview { border: 0; display: none; }
+  body.browsing webview { display: flex; }
+  body.browsing #start { display: none; }
+
+  #start {
+    position: absolute; inset: 0;
+    overflow-y: auto;
+    padding: 40px 32px 56px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+
+  .hero { text-align: center; margin-bottom: 26px; }
+  .bulb { font-size: 40px; line-height: 1; }
+  .powered {
+    display: inline-block;
+    margin-top: 12px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--onion);
+    border: 1px solid rgba(169,123,240,0.4);
+    background: var(--onion-dim);
+    border-radius: 999px;
+    padding: 4px 12px;
+  }
+  h1 { font-size: 25px; margin: 12px 0 6px; font-weight: 650; letter-spacing: -0.01em; }
+  .sub { color: var(--dim); font-size: 14px; margin: 0; }
+
+  form { display: flex; gap: 8px; margin: 24px 0 10px; }
+  #q {
+    flex: 1; height: 42px; padding: 0 16px;
+    border-radius: 10px; border: 1px solid var(--line);
+    background: var(--bg-2); color: var(--text); font-size: 14px; outline: none;
+  }
+  #q:focus { border-color: var(--onion); }
+  form button {
+    height: 42px; padding: 0 18px; border: 0; border-radius: 10px;
+    background: var(--onion); color: #1a0f2a; font-weight: 650; font-size: 13.5px; cursor: pointer;
+  }
+  .via { text-align: center; font-size: 11.5px; color: var(--dimmer); margin-bottom: 30px; }
+
+  /* Honest limits, stated before the links rather than buried after them. */
+  .caveat {
+    border: 1px solid rgba(240,180,41,0.3);
+    background: rgba(240,180,41,0.07);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 30px;
+    font-size: 12.8px;
+    line-height: 1.55;
+    color: #e6d6b0;
+  }
+  .caveat b { color: var(--warn); display: block; margin-bottom: 4px; font-size: 13px; }
+
+  h2 {
+    font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--dimmer); margin: 28px 0 12px; font-weight: 650;
+  }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(228px, 1fr)); gap: 10px; }
+  .card {
+    display: block; text-align: left; width: 100%;
+    padding: 13px 15px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--bg-2);
+    color: inherit; cursor: pointer; font: inherit;
+    transition: border-color .14s, background .14s, transform .14s;
+  }
+  .card:hover { border-color: var(--onion); background: var(--bg-3); transform: translateY(-1px); }
+  .card .n { font-weight: 600; font-size: 13.5px; margin-bottom: 3px; }
+  .card .d { color: var(--dim); font-size: 11.8px; line-height: 1.45; }
+  .card .h { color: var(--dimmer); font-size: 10.5px; margin-top: 6px; font-family: ui-monospace, SFMono-Regular, monospace; word-break: break-all; }
+  footer { margin-top: 34px; text-align: center; color: var(--dimmer); font-size: 11.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div id="bar">
+  <button class="nav" id="back" title="Back" disabled>‹</button>
+  <button class="nav" id="fwd" title="Forward" disabled>›</button>
+  <button class="nav" id="reload" title="Reload">⟳</button>
+  <button class="nav" id="home" title="Start page">⌂</button>
+  <input id="url" placeholder="Enter an address, or search" spellcheck="false" autocomplete="off">
+  <select id="level" title="Security level">
+    <option value="standard">Standard</option>
+    <option value="safer">Safer</option>
+    <option value="safest">Safest</option>
+  </select>
+  <button id="circuit" title="Discard this circuit and build a new one">New circuit</button>
+  <button id="identity" title="Clear everything and start over on a fresh circuit">New identity</button>
+</div>
+
+<div id="status" class="connecting"><span id="dot"></span><span id="statusText">Starting Tor…</span></div>
+
+<div id="levelNote"></div>
+
+<div id="onionloc">
+  <span id="onionlocText"></span>
+  <button id="onionlocGo">Go to the onion site</button>
+  <button class="dismiss" id="onionlocNo">Not now</button>
+</div>
+
+<div id="stage">
+  <div id="start">
+    <div class="wrap">
+      <div class="hero">
+        <div class="bulb">🧅</div>
+        <div class="powered">Powered by Tor</div>
+        <h1>Onion Mode</h1>
+        <p class="sub">Your trusted connection to the Tor network. This window shares nothing with your normal browsing, and is wiped when you close it.</p>
+      </div>
+
+      <form id="search">
+        <input id="q" placeholder="Search the dark web" spellcheck="false" autocomplete="off">
+        <button type="submit">Search</button>
+      </form>
+      <div class="via">Searches run on DuckDuckGo's onion service. No logs, no redirects.</div>
+
+      <div class="caveat">
+        <b>What this does and does not protect</b>
+        This hides your IP address and lets you reach .onion services. It is <em>not</em>
+        Tor Browser. Tor Browser makes every user look identical; this is still Mind
+        Browser, with your window size and your extensions, so a determined site could
+        pick you out by fingerprint even without knowing your address. Good for privacy
+        from your network and for reaching onion services. If being identified would put
+        you in danger, use Tor Browser instead.
+      </div>
+
+      <h2>Search</h2>
+      <div class="grid" id="g-search"></div>
+      <h2>News and journalism</h2>
+      <div class="grid" id="g-news"></div>
+      <h2>Secure drops</h2>
+      <div class="grid" id="g-drop"></div>
+      <h2>Tools and reference</h2>
+      <div class="grid" id="g-tools"></div>
+
+      <footer>
+        Onion addresses change. Verify one from the organisation's own clearnet site before trusting it.<br>
+        Everything in this window is wiped when you close it.
+      </footer>
+    </div>
+  </div>
+  <webview id="view" partition="onion" allowpopups="false"></webview>
+</div>
+
+<script src="js/onion.js"></script>
+</body>
+</html>
