@@ -1,0 +1,162 @@
+{
+  "name": "mind-browser",
+  "productName": "Mind Browser",
+  "version": "2.5.0",
+  "description": "Mind Browser \u2014 AI-Native Desktop Browser with Intelligent Agents",
+  "main": "main/index.js",
+  "author": "Prakhar Singh",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "fetch-tor": "node scripts/fetch-tor.js",
+    "dmg-art": "python3 scripts/make-dmg-background.py"
+  },
+  "dependencies": {
+    "electron-chrome-extensions": "^4.9.0",
+    "electron-chrome-web-store": "^0.13.0",
+    "electron-updater": "^6.8.9"
+  },
+  "devDependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "docx": "^9.7.1",
+    "electron": "github:castlabs/electron-releases#v36.9.5+wvcus",
+    "electron-builder": "^26.15.3",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^6.2.108",
+    "pptxgenjs": "^4.0.1"
+  },
+  "build": {
+    "appId": "com.mindbrowser.app",
+    "productName": "Mind Browser",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "asar": true,
+    "files": [
+      "**/*",
+      "!resources/**",
+      "!scripts/**"
+    ],
+    "electronDownload": {
+      "mirror": "https://github.com/castlabs/electron-releases/releases/download/",
+      "customDir": "v36.9.5+wvcus"
+    },
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.icns",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "darkModeSupport": true,
+      "minimumSystemVersion": "11.0",
+      "hardenedRuntime": true,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.inherit.plist",
+      "gatekeeperAssess": false,
+      "notarize": true,
+      "extendInfo": {
+        "NSLocationWhenInUseUsageDescription": "A website you are visiting has asked for your location. Mind Browser will ask you before sharing it.",
+        "NSLocationUsageDescription": "A website you are visiting has asked for your location. Mind Browser will ask you before sharing it.",
+        "NSCameraUsageDescription": "A website you are visiting has asked to use your camera. Mind Browser will ask you before allowing it.",
+        "NSMicrophoneUsageDescription": "A website you are visiting has asked to use your microphone. Mind Browser will ask you before allowing it.",
+        "NSSpeechRecognitionUsageDescription": "Used for voice input in the address bar and the AI panel.",
+        "NSBluetoothAlwaysUsageDescription": "A website you are visiting has asked to connect to a Bluetooth device.",
+        "NSDownloadsFolderUsageDescription": "Used to save files you download.",
+        "NSDocumentsFolderUsageDescription": "Used to open and save documents you choose.",
+        "NSDesktopFolderUsageDescription": "Used to open and save files you choose."
+      },
+      "artifactName": "Mind-Browser-macOS-${arch}.${ext}",
+      "extraResources": [
+        {
+          "from": "resources/tor/darwin-${arch}",
+          "to": "tor/darwin-${arch}",
+          "filter": [
+            "**/*"
+          ]
+        }
+      ]
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "prakharsingh1",
+        "repo": "mind-browser",
+        "releaseType": "release"
+      }
+    ],
+    "win": {
+      "icon": "build/icon.png",
+      "artifactName": "Mind-Browser-Windows-${arch}.${ext}",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "extraResources": [
+        {
+          "from": "resources/tor/win32-${arch}",
+          "to": "tor/win32-${arch}",
+          "filter": [
+            "**/*"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Mind Browser"
+    },
+    "dmg": {
+      "title": "Mind Browser ${version}",
+      "background": "build/dmg-background.png",
+      "window": {
+        "width": 620,
+        "height": 400
+      },
+      "iconSize": 128,
+      "iconTextSize": 12,
+      "contents": [
+        {
+          "x": 165,
+          "y": 208,
+          "type": "file"
+        },
+        {
+          "x": 455,
+          "y": 208,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    }
+  }
+}
