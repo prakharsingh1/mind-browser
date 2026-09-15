@@ -1,0 +1,143 @@
+/* =============================================================================
+   Company Page — full company research view
+   Reuses finance-page primitives (.fin-pills, .fin-logo-wrap, .fin-up/.fin-down,
+   .fin-chart-card, .news-shimmer, .news-empty, .story-back).
+   ============================================================================= */
+
+#company-page {
+  display: none;
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  background: var(--bg-primary);
+  z-index: 5;
+}
+.cp-inner { max-width: 1000px; margin: 0 auto; padding: 22px 26px 60px; }
+
+/* ── Header ── */
+.cp-header {
+  display: flex; align-items: center; gap: 14px;
+  padding: 6px 0 18px; flex-wrap: wrap;
+}
+.cp-head-main { flex: 1; min-width: 180px; }
+.cp-head-main h1 { font-size: 24px; font-weight: 700; color: var(--text-primary); margin: 0; }
+.cp-head-meta { font-size: 12px; color: var(--text-tertiary); margin-top: 3px; }
+.cp-open { color: var(--accent-ink); }
+.cp-closed { color: var(--text-tertiary); }
+.cp-head-price { text-align: right; }
+.cp-price { font-size: 24px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.cp-chg { font-size: 13px; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.cp-head-actions { display: flex; gap: 8px; }
+.cp-btn {
+  background: var(--bg-tertiary); border: 1px solid var(--border-color);
+  color: var(--text-secondary); border-radius: 999px;
+  padding: 7px 13px; font-size: 12.5px; cursor: pointer; font-family: inherit;
+}
+.cp-btn:hover { color: var(--text-primary); border-color: var(--accent-dim); }
+.cp-btn.active { color: var(--accent-ink); border-color: var(--accent-dim); }
+
+.cp-chart-card { margin-top: 0; }
+.cp-h2 {
+  font-size: 15px; font-weight: 700; color: var(--text-primary);
+  margin: 26px 0 12px;
+}
+
+/* ── Stat grid ── */
+.cp-stats {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 1px;
+  background: var(--border-color); border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg); overflow: hidden;
+}
+.cp-stat {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: var(--bg-secondary); padding: 11px 14px; font-size: 12.5px;
+}
+.cp-stat span { color: var(--text-tertiary); }
+.cp-stat b { color: var(--text-primary); font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+.cp-stat a { color: var(--accent-ink); text-decoration: none; }
+.cp-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+.cp-desc { font-size: 13.5px; line-height: 1.65; color: var(--text-secondary); margin: 0 0 12px; }
+
+/* ── AI analysis ── */
+.cp-ai-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.cp-ai-card {
+  background: var(--bg-secondary); border: 1px solid var(--border-color);
+  border-left-width: 3px; border-radius: var(--radius-lg); padding: 12px 14px;
+}
+.cp-ai-card h3 { font-size: 12.5px; margin: 0 0 8px; font-weight: 700; }
+.cp-ai-card ul { margin: 0; padding-left: 16px; }
+.cp-ai-card li { font-size: 12.5px; line-height: 1.55; color: var(--text-secondary); margin-bottom: 5px; }
+.cp-bull { border-left-color: var(--accent); }
+.cp-bull h3 { color: var(--accent-ink); }
+.cp-bear { border-left-color: #e05c5c; }
+.cp-bear h3 { color: #e05c5c; }
+.cp-risk { border-left-color: #e0b45c; }
+.cp-risk h3 { color: #e0b45c; }
+.cp-insight { border-left-color: #5b9dd9; }
+.cp-insight h3 { color: #5b9dd9; }
+
+/* ── Tables (financials, holders, insiders, earnings) ── */
+.cp-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.cp-table th {
+  text-align: right; font-weight: 600; color: var(--text-tertiary);
+  padding: 8px 10px; border-bottom: 1px solid var(--border-color); font-size: 11.5px;
+}
+.cp-table th:first-child, .cp-table td:first-child { text-align: left; }
+.cp-table td {
+  text-align: right; padding: 9px 10px; color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color); font-variant-numeric: tabular-nums;
+}
+.cp-table tbody tr:hover { background: var(--bg-tertiary); }
+.cp-table td:first-child { color: var(--text-secondary); }
+.cp-fin-table { margin-top: 8px; }
+.cp-barchart { margin: 4px 0 8px; }
+.cp-barchart svg { display: block; }
+
+/* ── Analyst ratings ── */
+.cp-rec { font-size: 12.5px; color: var(--text-secondary); margin-bottom: 10px; font-weight: 600; }
+.cp-rating-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; font-size: 12px; }
+.cp-rating-row span { width: 40px; color: var(--text-tertiary); }
+.cp-rating-row b { width: 26px; text-align: right; color: var(--text-primary); }
+.cp-rating-bar { flex: 1; height: 7px; background: var(--bg-tertiary); border-radius: 4px; overflow: hidden; }
+.cp-rating-bar div { height: 100%; border-radius: 4px; }
+
+.cp-two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; align-items: start; }
+
+/* ── Competitors ── */
+.cp-peers { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+.cp-peer {
+  display: flex; align-items: center; gap: 10px; cursor: pointer;
+  background: var(--bg-secondary); border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg); padding: 10px 12px;
+}
+.cp-peer:hover { border-color: var(--accent-dim); }
+.cp-peer-main { flex: 1; min-width: 0; }
+.cp-peer-main b { display: block; font-size: 12.5px; color: var(--text-primary); }
+.cp-peer-main span { display: block; font-size: 10.5px; color: var(--text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cp-peer-px { text-align: right; font-variant-numeric: tabular-nums; }
+.cp-peer-px b { display: block; font-size: 12.5px; color: var(--text-primary); }
+.cp-peer-px span { font-size: 11px; }
+
+/* ── News ── */
+.cp-news-row {
+  padding: 11px 12px; cursor: pointer; border-radius: var(--radius-md);
+  border-bottom: 1px solid var(--border-color);
+}
+.cp-news-row:hover { background: var(--bg-secondary); }
+.cp-news-main b { font-size: 13px; color: var(--text-primary); font-weight: 600; line-height: 1.45; }
+
+/* ── AI chat ── */
+.cp-chat-log { max-height: 340px; overflow-y: auto; margin-bottom: 10px; }
+.cp-msg {
+  font-size: 13px; line-height: 1.6; padding: 10px 13px;
+  border-radius: var(--radius-lg); margin-bottom: 8px; white-space: pre-wrap;
+}
+.cp-msg-user { background: var(--bg-tertiary); color: var(--text-primary); margin-left: auto; max-width: 78%; width: fit-content; }
+.cp-msg-ai { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-secondary); }
+.cp-chat-row { display: flex; gap: 8px; }
+.cp-chat-row input {
+  flex: 1; padding: 10px 14px; background: var(--bg-tertiary);
+  border: 1px solid var(--border-color); border-radius: 999px;
+  color: var(--text-primary); font-size: 12.5px; outline: none; font-family: inherit;
+}
+.cp-chat-row input:focus { border-color: var(--border-focus); }
