@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mind Browser</title>
+  <meta name="description" content="Mind Browser — AI-native browsing with intelligent agents">
+
+  <!-- The browser chrome is a privileged document: it holds the preload bridge
+       that can read files, write settings and drive every tab. Its own scripts
+       and styles are all local, so it declares that and nothing else. Web
+       content lives in <webview> guests, which have their own separate CSP and
+       are unaffected by this.
+       script-src has NO 'unsafe-inline'. The inline onclick/onerror attributes
+       that used to require it are gone — settings.js routes clicks through
+       data-act, and js/inline-actions.js handles image fallbacks and markdown
+       buttons declaratively. That is what makes this an injection defence
+       rather than only a source restriction: an injected inline <script> in
+       this window would not execute.
+       'unsafe-inline' remains for STYLE, which the UI genuinely needs for the
+       inline style attributes it sets while animating. Style injection cannot
+       execute code. -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self';
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' data: blob: https:;
+    media-src 'self' data: blob:;
+    font-src 'self' data:;
+    connect-src 'self' data: blob: https: http://localhost:* http://127.0.0.1:*;
+    frame-src 'self';
+    object-src 'none';
+    base-uri 'none';
+    form-action 'none'">
+
+  <!-- Stylesheets (fonts are the native system stack — no network fetch at startup) -->
+  <link rel="stylesheet" href="styles/design-system.css">
+  <link rel="stylesheet" href="styles/onboarding.css">
+  <link rel="stylesheet" href="styles/animations.css">
+  <link rel="stylesheet" href="styles/layout.css">
+  <link rel="stylesheet" href="styles/sidebar.css">
+  <link rel="stylesheet" href="styles/browser-chrome.css">
+  <link rel="stylesheet" href="styles/ai-panel.css">
+  <link rel="stylesheet" href="styles/chat.css">
+  <link rel="stylesheet" href="styles/command-palette.css">
+  <link rel="stylesheet" href="styles/settings.css">
+  <link rel="stylesheet" href="styles/features.css">
+  <link rel="stylesheet" href="styles/clock-themes.css">
+  <link rel="stylesheet" href="styles/news-page.css">
+  <link rel="stylesheet" href="styles/finance-page.css">
+  <link rel="stylesheet" href="styles/company-page.css">
+  <link rel="stylesheet" href="styles/ntp.css">
+  <link rel="stylesheet" href="styles/notes-page.css">
+  <link rel="stylesheet" href="styles/history-page.css">
+</head>
+<body>
+  <script src="js/boot-guard.js"></script>
+  <script src="js/inline-actions.js"></script>
+
+  <div id="app">
+
+    <!-- Wallpaper sits behind the whole shell so the sidebar can frost over it -->
+    <div id="ntp-wallpaper"></div>
+
+    <!-- Right-edge hot zone: reveals the AI panel when it's auto-hidden -->
+    <div id="ai-hotzone"></div>
+
+    <!-- Left-edge hot zone: reveals the sidebar when it's auto-hidden -->
+    <div id="sidebar-hotzone"></div>
+
+    <!-- ═══════════════════════════════════════════
+         TOP BAR
+         ═══════════════════════════════════════════ -->
+    <div id="top-bar">
+
+      <!-- Navigation Buttons -->
+      <button class="nav-btn" id="btn-back" title="Back" disabled>
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 3L5 8l5 5"/>
+        </svg>
+      </button>
+
+      <button class="nav-btn" id="btn-forward" title="Forward" disabled>
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 3l5 5-5 5"/>
+        </svg>
+      </button>
+
+      <button class="nav-btn" id="btn-reload" title="Reload">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9"/>
+          <path d="M13.5 2.5V5H11"/>
+        </svg>
+      </button>
+
+      <button class="nav-btn" id="btn-home" title="Home">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2.5 6.5L8 2l5.5 4.5V13a1 1 0 0 1-1 1h-10a1 1 0 0 1-1-1V6.5z"/>
+          <path d="M6 14V9h4v5"/>
+        </svg>
+      </button>
+
+      <div class="nav-separator"></div>
+
+      <!-- Address Bar -->
+      <div id="address-bar">
+        <button class="address-security" id="btn-site-info" title="Site information">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="6" width="8" height="6" rx="1"/>
+            <path d="M5 6V4a2 2 0 0 1 4 0v2"/>
+          </svg>
+        </button>
+        <input type="text" id="address-input" placeholder="Search or enter address..." spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off">
+        <button class="address-action" id="btn-bookmark" title="Bookmark this page">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="nav-separator"></div>
+
+      <!-- Private-mode indicator (shown only in incognito tabs) -->
+      <div id="incognito-badge" title="You're browsing privately">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+          <path d="M5 12a7 7 0 0 1 14 0"/><circle cx="8" cy="15" r="2.6"/><circle cx="16" cy="15" r="2.6"/><path d="M10.6 15h2.8"/>
+        </svg>
+        <span>Private</span>
+      </div>
+
+      <!-- Top Bar Right Controls -->
+      <!-- Appears only while a tab is actually playing sound. -->
+      <div id="volume-wrap" hidden>
+        <button class="top-bar-btn" id="btn-volume" title="Volume">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h2.5L9 3v10L5.5 10H3z"/>
+            <path d="M11 6.2a2.6 2.6 0 0 1 0 3.6"/>
+            <path d="M12.8 4.3a5.2 5.2 0 0 1 0 7.4"/>
+          </svg>
+          <span id="volume-badge"></span>
+        </button>
+        <div id="volume-popover">
+          <div class="vol-head"><span id="vol-level">100%</span><button id="vol-reset">Reset</button></div>
+          <input id="vol-slider" type="range" min="0" max="500" step="5" value="100">
+          <div class="vol-ticks"><span>0</span><span>100</span><span>500%</span></div>
+          <div id="vol-note"></div>
+        </div>
+      </div>
+      <button class="top-bar-btn" data-tb="zoom-out" id="btn-zoom-out" title="Zoom Out (⌘−)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="7" cy="7" r="4.5"/>
+          <line x1="10.6" y1="10.6" x2="14" y2="14"/>
+          <line x1="5.2" y1="7" x2="8.8" y2="7"/>
+        </svg>
+      </button>
+      <button class="top-bar-btn" data-tb="zoom-in" id="btn-zoom" title="Zoom In (⌘+)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="7" cy="7" r="4.5"/>
+          <line x1="10.6" y1="10.6" x2="14" y2="14"/>
+          <line x1="7" y1="5.2" x2="7" y2="8.8"/>
+          <line x1="5.2" y1="7" x2="8.8" y2="7"/>
+        </svg>
+      </button>
+      <button class="top-bar-btn" data-tb="reading-mode" id="btn-reading-mode" title="Reading mode">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 3h4.5a2 2 0 0 1 2 2v9l-1-1H3a1 1 0 0 1-1-1V3z"/>
+          <path d="M14 3h-4.5a2 2 0 0 0-2 2v9l1-1H13a1 1 0 0 0 1-1V3z"/>
+        </svg>
+      </button>
+
+      <button class="top-bar-btn" data-tb="history" id="btn-history" title="History (⌘Y)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2.6 8a5.4 5.4 0 1 0 1.6-3.8"/>
+          <path d="M2 3v3h3"/>
+          <path d="M8 5.25V8l2 1.25"/>
+        </svg>
+      </button>
+
+      <button class="top-bar-btn" data-tb="downloads" id="btn-downloads" title="Downloads (⌘⇧J)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 2v8M4.5 6.5L8 10l3.5-3.5"/>
+          <path d="M2.5 12.5h11"/>
+        </svg>
+        <span id="dl-progress-ring"></span>
+        <span id="dl-badge"></span>
+      </button>
+
+      <button class="top-bar-btn" data-tb="command-palette" id="btn-command-palette" title="Command Palette (⌘K)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="8" r="6"/>
+          <path d="M8 5v6M5 8h6"/>
+        </svg>
+      </button>
+
+      <button class="top-bar-btn active" data-tb="ai" id="btn-ai-toggle" title="Toggle AI Panel">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4h8v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4z"/>
+          <path d="M6 1v3M10 1v3"/>
+          <circle cx="6.5" cy="7.5" r="0.5" fill="currentColor" stroke="none"/>
+          <circle cx="9.5" cy="7.5" r="0.5" fill="currentColor" stroke="none"/>
+          <path d="M6.5 9.5a1.5 1.5 0 0 0 3 0"/>
+        </svg>
+      </button>
+
+      <!-- Chrome extension toolbar icons -->
+      <browser-action-list id="ext-action-list"></browser-action-list>
+
+      <button class="top-bar-btn" data-tb="dev" id="btn-dev" title="Developer tools (⌥⌘D)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5.5 5L2.5 8l3 3"/><path d="M10.5 5l3 3-3 3"/><path d="M9 3l-2 10"/>
+        </svg>
+      </button>
+      <button class="top-bar-btn" data-tb="extensions" id="btn-extensions" title="Extensions">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 2.5a1.5 1.5 0 0 1 3 0V4h2.5a.5.5 0 0 1 .5.5V7h1.5a1.5 1.5 0 0 1 0 3H12v2.5a.5.5 0 0 1-.5.5H9v-1.5a1.5 1.5 0 0 0-3 0V13H3.5a.5.5 0 0 1-.5-.5V10H4.5a1.5 1.5 0 0 0 0-3H3V4.5a.5.5 0 0 1 .5-.5H6V2.5z"/>
+        </svg>
+      </button>
+
+      <button class="top-bar-btn" id="btn-menu" title="Menu">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <path d="M3 4h10M3 8h10M3 12h10"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Extensions popover -->
+    <div id="ext-popover" style="display:none; position:absolute; top:48px; right:12px; z-index:2000; width:300px; background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--radius-lg); box-shadow:0 12px 32px rgba(0,0,0,0.5); padding:8px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 8px;">
+        <span style="font-size:13px; font-weight:600; color:var(--text-primary);">Extensions</span>
+        <button id="ext-store-btn" style="font-size:11px; color:var(--accent); background:none; border:none; cursor:pointer;">+ Web Store</button>
+      </div>
+      <div id="ext-list" style="max-height:280px; overflow-y:auto;"></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         BOOKMARKS BAR
+         ═══════════════════════════════════════════ -->
+    <div id="bookmarks-bar" style="display: none; height: 28px; background: var(--bg-primary); border-bottom: 1px solid var(--border-color); padding: 0 12px; align-items: center; gap: 12px; font-size: 12px; color: var(--text-secondary); overflow-x: auto; flex-shrink: 0;">
+      <div style="cursor: pointer; padding: 2px 6px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" style="width:12px;height:12px"><path d="M8 12l-4.5 3V2a1 1 0 011-1h7a1 1 0 011 1v13L8 12z"/></svg> Google
+      </div>
+      <div style="cursor: pointer; padding: 2px 6px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" style="width:12px;height:12px"><path d="M8 12l-4.5 3V2a1 1 0 011-1h7a1 1 0 011 1v13L8 12z"/></svg> YouTube
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         MAIN CONTENT
+         ═══════════════════════════════════════════ -->
+    <div id="main-content">
+
+      <!-- ─────────── SIDEBAR ─────────── -->
+      <div id="sidebar">
+        <div class="resize-handle" style="right: 0;"></div>
+        <div class="sidebar-inner">
+
+          <!-- Open Tabs — first, because it's the most used -->
+          <div class="sidebar-section">
+            <div class="section-header" data-section="open-tabs">
+              <svg class="collapse-icon" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 4.5l3 3 3-3"/>
+              </svg>
+              <span class="section-header-text">Open Tabs</span>
+              <button id="sidebar-new-tab" class="sidebar-newtab-btn" title="New Tab (⌘T)">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+                  <path d="M8 3.5v9M3.5 8h9"/>
+                </svg>
+              </button>
+            </div>
+            <div class="section-content open-tabs-list" id="open-tabs-list">
+            </div>
+          </div>
+
+          <div class="sidebar-divider"></div>
+
+          <!-- Primary navigation -->
+          <div class="sidebar-section">
+            <div class="sidebar-item" id="sidebar-news">
+              <span class="sidebar-item-icon">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="3" width="12" height="10" rx="1.5"/>
+                  <path d="M4.75 6h4.5M4.75 8.5h4.5M4.75 11h2.5"/>
+                  <path d="M11.5 6h0.01"/>
+                </svg>
+              </span>
+              <span class="sidebar-label">News</span>
+            </div>
+            <div class="sidebar-item" id="sidebar-finance">
+              <span class="sidebar-item-icon">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="3" width="12" height="10" rx="1.5"/>
+                  <!-- Rising bars rather than a zigzag line: four points of
+                       polyline inside a 12x10 box collapse into a smudge at
+                       this size, where three bars stay crisp. -->
+                  <path d="M5.25 10.5V9M8 10.5V7M10.75 10.5V5.75"/>
+                </svg>
+              </span>
+              <span class="sidebar-label">Finance</span>
+            </div>
+            <div class="sidebar-item" id="sidebar-notes">
+              <span class="sidebar-item-icon">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="3" width="12" height="10" rx="1.5"/>
+                  <path d="M4.75 6.25h6.5M4.75 9.25h4"/>
+                </svg>
+              </span>
+              <span class="sidebar-label">Notes</span>
+              <span class="sidebar-count" id="notes-count"></span>
+            </div>
+          </div>
+
+          <div class="sidebar-divider"></div>
+
+          <!-- Pinned Section -->
+          <div class="sidebar-section">
+            <div class="section-header" data-section="pinned">
+              <span class="section-header-text">Pinned</span>
+              <svg class="collapse-icon" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                <path d="M3 4.5l3 3 3-3"/>
+              </svg>
+            </div>
+            <div class="section-content" id="pinned-list" style="max-height: 400px;">
+              <div class="sidebar-empty" id="pinned-empty">
+                <b>Nothing pinned yet</b>
+                Right-click a tab to keep it here.
+              </div>
+            </div>
+          </div>
+
+          <div class="sidebar-divider"></div>
+
+          <!-- Bookmarks Section (populated by import) -->
+          <div class="sidebar-section" id="bookmarks-section" style="display:none;">
+            <div class="section-header" data-section="bookmarks">
+              <span class="section-header-text">Bookmarks</span>
+              <svg class="collapse-icon" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                <path d="M3 4.5l3 3 3-3"/>
+              </svg>
+            </div>
+            <div class="section-content" id="bookmarks-list" style="max-height: 400px;">
+            </div>
+          </div>
+
+          <!-- Footer: Settings left, collapse pinned to the right -->
+          <div class="sidebar-footer">
+            <div class="sidebar-item" data-page="settings" id="sidebar-settings">
+              <span class="sidebar-item-icon">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="8" cy="8" r="2"/>
+                  <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/>
+                </svg>
+              </span>
+              <span class="sidebar-label">Settings</span>
+            </div>
+            <button class="sidebar-collapse-btn" id="sidebar-toggle" title="Collapse sidebar (⌘B)">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9.5 4.5L6 8l3.5 3.5"/>
+                <path d="M12.5 3v10"/>
+              </svg>
+            </button>
+          </div>
+
+
+        </div>
+      </div>
+
+      <!-- ─────────── BROWSER VIEWPORT ─────────── -->
+      <div id="browser-viewport">
+
+        <!-- Tab Bar -->
+        <div id="tab-bar">
+          <div class="tab active" data-tab-id="1">
+            <svg class="tab-favicon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="8" cy="8" r="5"/>
+              <path d="M8 5v3l2 1"/>
+            </svg>
+            <span class="tab-title">New Tab</span>
+            <button class="tab-close" title="Close tab">
+              <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                <path d="M3 3l6 6M9 3l-6 6"/>
+              </svg>
+            </button>
+          </div>
+          <button id="new-tab-btn" title="New Tab (⌘T)">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              <path d="M8 3v10M3 8h10"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Webview Container -->
+        <div id="webview-container">
+          <div id="page-progress" class="hidden"></div>
+
+          <!-- New Tab Page -->
+          <div id="new-tab-page">
+            <div class="ntp-scroll">
+              <div class="ntp-inner">
+
+              <!-- Greeting -->
+              <div class="ntp-greeting">
+                <h1>Good afternoon</h1>
+                <p>What would you like to explore today?</p>
+              </div>
+
+              <!-- Search -->
+              <div class="ntp-search" id="ntp-search-box">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="7" cy="7" r="5"/>
+                  <path d="M13 13l-3-3"/>
+                </svg>
+                <input type="text" id="ntp-search" placeholder="Search the web or ask AI anything…" spellcheck="false" autocomplete="off">
+                <span class="ntp-kbd">⌘K</span>
+              </div>
+
+              <!-- Widgets -->
+              <div class="ntp-widgets">
+                <!-- Clock -->
+                <div class="ntp-widget ntp-clock">
+                  <div class="ntp-clock-mount"></div>
+                </div>
+
+                <!-- Weather (rendered by js/new-tab-page.js) -->
+                <div class="ntp-widget ntp-weather" id="ntp-weather"></div>
+
+                <!-- Notes -->
+                <div class="ntp-widget ntp-notes" id="ntp-notes">
+                  <div class="ntp-notes-head">
+                    <span class="ntp-notes-title">Note</span>
+                    <span class="ntp-note-status" id="ntp-note-status"></span>
+                  </div>
+                  <textarea id="ntp-note" placeholder="Jot something down…" spellcheck="true"></textarea>
+                  <div class="ntp-notes-foot">
+                    <span class="ntp-note-count" id="ntp-note-count">0</span>
+                    <button class="ntp-note-save" id="ntp-note-save">Save</button>
+                  </div>
+                </div>
+
+                <!-- News (rendered by js/new-tab-page.js) -->
+                <div class="ntp-widget ntp-news" id="ntp-news"></div>
+              </div>
+
+              <!-- Shortcuts -->
+              <div class="ntp-shortcuts" id="ntp-quick-links"></div>
+
+              <!-- Recent conversations -->
+              <div class="ntp-recent" id="ntp-recent-section">
+                <div class="ntp-recent-head" id="ntp-recent-toggle" role="button" tabindex="0" aria-expanded="true">
+                  <svg class="ntp-recent-chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 6l4 4 4-4"/>
+                  </svg>
+                  <h3>Recent Conversations</h3>
+                  <span class="ntp-recent-count" id="ntp-recent-count"></span>
+                </div>
+                <div class="ntp-recent-list" id="ntp-recent-list"></div>
+              </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Private / Incognito Splash -->
+          <div id="incognito-page" style="display:none; position:absolute; inset:0; flex-direction:column; align-items:center; justify-content:center; background:var(--bg-base); text-align:center; padding:24px; z-index:2;">
+            <div style="width:76px;height:76px;border-radius:50%;background:rgba(167,139,250,0.12);display:flex;align-items:center;justify-content:center;margin-bottom:22px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:38px;height:38px;">
+                <path d="M5 12a7 7 0 0 1 14 0"/><circle cx="8" cy="15" r="2.6"/><circle cx="16" cy="15" r="2.6"/><path d="M10.6 15h2.8"/>
+              </svg>
+            </div>
+            <h1 style="font-size:25px;font-weight:600;color:var(--text-primary);margin-bottom:10px;">You've gone private</h1>
+            <p style="font-size:14px;color:var(--text-secondary);max-width:460px;line-height:1.65;margin-bottom:28px;">
+              Pages you view in private tabs won't be saved to your history, and cookies &amp; site data are cleared when you close them. Your bookmarks stay available.
+            </p>
+            <div style="display:flex;align-items:center;gap:10px;width:100%;max-width:480px;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius-xl);padding:12px 16px;">
+              <svg viewBox="0 0 16 16" fill="none" stroke="var(--text-tertiary)" stroke-width="1.5" style="width:16px;height:16px;flex-shrink:0;"><circle cx="7" cy="7" r="5"/><path d="M13 13l-2.5-2.5"/></svg>
+              <input id="incognito-search" type="text" placeholder="Search privately or enter address…" style="flex:1;background:none;border:none;outline:none;color:var(--text-primary);font-size:14px;font-family:inherit;">
+            </div>
+          </div>
+
+          <!-- News Page (content built by js/news-page.js) -->
+          <div id="news-page"></div>
+
+          <!-- Finance Page (content built by js/finance-page.js) -->
+          <div id="finance-page"></div>
+
+          <!-- Story Reader (content built by js/story-page.js) -->
+          <div id="story-page"></div>
+
+          <!-- Company Page (content built by js/company-page.js) -->
+          <div id="company-page"></div>
+
+          <!-- Notes (content built by js/notes-page.js) -->
+          <div id="notes-page"></div>
+
+          <!-- History (content built by js/history-page.js) -->
+          <div id="history-page"></div>
+
+        </div>
+      </div>
+
+      <!-- ─────────── AI PANEL ─────────── -->
+      <div id="ai-panel">
+        <div class="resize-handle" style="left: 0;"></div>
+
+        <!-- Everything below is the layer that slides in on edge-hover -->
+        <div class="ai-panel-inner">
+
+        <!-- AI Panel Header -->
+        <div class="ai-panel-header">
+          <span class="panel-title">AI Assistant</span>
+          <select class="model-select" id="model-select">
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+          </select>
+          <button class="close-panel-btn" id="ai-history-btn" title="Past conversations">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2.6 8a5.4 5.4 0 1 0 1.6-3.8"/>
+              <path d="M2.2 3.2v2.6h2.6"/>
+              <path d="M8 5.2V8l2 1.2"/>
+            </svg>
+          </button>
+          <button class="close-panel-btn" id="ai-new-chat" title="New conversation">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 3.5v9M3.5 8h9"/>
+            </svg>
+          </button>
+          <button class="close-panel-btn" id="close-ai-panel" title="Close panel">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              <path d="M4 4l8 8M12 4l-8 8"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- AI Mode Tabs -->
+
+
+        <!-- Chat Container -->
+        <div id="chat-container">
+          <!-- AI Empty State -->
+          <div class="ai-empty-state" id="ai-empty-state">
+
+            <div class="empty-title">Mind Browser AI</div>
+            <div class="empty-desc">
+              Ask anything about the page you're viewing, research topics in depth, or let agents browse for you.
+            </div>
+          </div>
+        </div>
+
+
+
+        <!-- Memory Indicator -->
+        <div class="memory-indicator">
+          <span class="memory-dot"></span>
+          <span id="memory-indicator-text">Memory active</span>
+        </div>
+
+        <!-- AI Input Area -->
+        <div class="ai-input-area">
+          <div class="ai-input-row">
+            <button class="ai-btn ai-attach-btn" title="Attach file">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M13.5 7.5l-5.59 5.59a3.12 3.12 0 0 1-4.41-4.42l5.58-5.58a2.08 2.08 0 0 1 2.94 2.94L6.44 11.6a1.04 1.04 0 0 1-1.47-1.47L10.06 5"/>
+              </svg>
+            </button>
+            <textarea id="ai-input" placeholder="Ask Mind Browser anything..." rows="1"></textarea>
+            <button class="ai-btn ai-voice-btn" id="voice-btn" title="Voice input">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="1" width="6" height="8" rx="3"/>
+                <path d="M3 7a5 5 0 0 0 10 0"/>
+                <path d="M8 12v3"/>
+              </svg>
+            </button>
+            <button class="ai-btn ai-send-btn" id="send-btn" title="Send message">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 8h8M8 4l4 4-4 4"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        </div><!-- /.ai-panel-inner -->
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       COMMAND PALETTE OVERLAY
+       ═══════════════════════════════════════════ -->
+  <div id="command-palette-overlay" class="hidden">
+    <div class="command-palette">
+      <!-- Search -->
+      <div class="cp-search-wrap">
+        <span class="cp-search-icon">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="7" cy="7" r="5"/>
+            <path d="M13 13l-3-3"/>
+          </svg>
+        </span>
+        <input type="text" id="cp-search" placeholder="Type a command or search..." autocomplete="off" spellcheck="false">
+        <span class="cp-kbd">⌘K</span>
+      </div>
+
+      <!-- Results -->
+      <div class="cp-results" id="cp-results">
+        <!-- Quick Actions -->
+        <div class="cp-category">Quick Actions</div>
+        <div class="cp-item selected">
+          <span class="cp-item-icon">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 3v10M3 8h10"/>
+            </svg>
+          </span>
+          <span class="cp-item-text">New Tab</span>
+          <span class="cp-item-shortcut">⌘T</span>
+        </div>
+        <div class="cp-item">
+          <span class="cp-item-icon">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="7" cy="7" r="5"/>
+              <path d="M13 13l-3-3"/>
+            </svg>
+          </span>
+          <span class="cp-item-text">Search the Web</span>
+          <span class="cp-item-shortcut">⌘L</span>
+        </div>
+        <div class="cp-item">
+          <span class="cp-item-icon">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H6l-3 3V4z"/>
+            </svg>
+          </span>
+          <span class="cp-item-text">Ask AI</span>
+          <span class="cp-item-shortcut">⌘J</span>
+        </div>
+
+        <!-- AI Agents -->
+        <div class="cp-category">AI Agents</div>
+        <div class="cp-item">
+          <span class="cp-item-icon" style="color: var(--agent-planner);">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h8v8H4zM7 4V2M9 4V2"/>
+            </svg>
+          </span>
+          <span class="cp-item-text">Planner Agent</span>
+        </div>
+        <div class="cp-item">
+          <span class="cp-item-icon" style="color: var(--agent-navigator);">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="8,1 15,15 8,11 1,15"/>
+            </svg>
+          </span>
+          <span class="cp-item-text">Navigator Agent</span>
+        </div>
+        <div class="cp-item">
+          <span class="cp-item-icon" style="color: var(--agent-researcher);">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="7" cy="7" r="5"/>
+              <path d="M13 13l-3-3"/>
+            </svg>
+          </span>
+          <span class="cp-item-text">Researcher Agent</span>
+        </div>
+
+        <!-- Navigation -->
+        <div class="cp-category">Navigation</div>
+        <div class="cp-item">
+          <span class="cp-item-icon">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="8" cy="8" r="6"/>
+              <path d="M8 5v3l2 2"/>
+            </svg>
+          </span>
+          <span class="cp-item-text">History</span>
+          <span class="cp-item-shortcut">⌘Y</span>
+        </div>
+        <div class="cp-item">
+          <span class="cp-item-icon">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 2h8a1 1 0 0 1 1 1v11l-5-3-5 3V3a1 1 0 0 1 1-1z"/>
+            </svg>
+          </span>
+          <span class="cp-item-text">Bookmarks</span>
+          <span class="cp-item-shortcut">⌘B</span>
+        </div>
+        <div class="cp-item">
+          <span class="cp-item-icon">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="8" cy="8" r="2"/>
+              <path d="M8 1v2M8 13v2M1 8h2M13 8h2"/>
+            </svg>
+          </span>
+          <span class="cp-item-text">Settings</span>
+          <span class="cp-item-shortcut">⌘,</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       SETTINGS OVERLAY
+       ═══════════════════════════════════════════ -->
+  <div id="settings-overlay" class="hidden">
+    <!-- Settings Sidebar -->
+    <div class="settings-sidebar">
+      <div class="settings-sidebar-title">Settings</div>
+
+      <button class="settings-nav-item active" data-section="general">
+        <span class="settings-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </span>
+        General
+      </button>
+      <button class="settings-nav-item" data-section="models">
+        <span class="settings-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+            <rect x="3" y="11" width="18" height="10" rx="2"/>
+            <circle cx="12" cy="5" r="2"/>
+            <path d="M12 7v4M8 16h.01M16 16h.01"/>
+          </svg>
+        </span>
+        AI Models
+      </button>
+      <button class="settings-nav-item" data-section="widgets">
+        <span class="settings-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+            <rect x="3" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="14" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+          </svg>
+        </span>
+        Widgets
+      </button>
+      <button class="settings-nav-item" data-section="news">
+        <span class="settings-nav-icon">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+            <path d="M3 2h8a1 1 0 0 1 1 1v10a1 1 0 0 0 1 1H4a2 2 0 0 1-2-2V3a1 1 0 0 1 1-1z"/>
+            <path d="M12 6h1.5a.5.5 0 0 1 .5.5V13a1 1 0 0 1-1 1"/>
+            <path d="M5 5h4M5 8h4M5 11h2.5"/>
+          </svg>
+        </span>
+        News
+      </button>
+      <button class="settings-nav-item" data-section="finance">
+        <span class="settings-nav-icon">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+            <path d="M2.5 2v10a1.5 1.5 0 0 0 1.5 1.5h10" opacity="0.5"/>
+            <path d="M5 10.5l2.5-3 2 1.75 3-4.25"/>
+            <path d="M10 5h2.5v2.5"/>
+          </svg>
+        </span>
+        Finance
+      </button>
+      <button class="settings-nav-item" data-section="memory">
+        <span class="settings-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+            <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/>
+            <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/>
+          </svg>
+        </span>
+        Memory
+      </button>
+      <button class="settings-nav-item" data-section="privacy">
+        <span class="settings-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </span>
+        Privacy
+      </button>
+      <button class="settings-nav-item" data-section="performance">
+        <span class="settings-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+        </span>
+        Performance
+      </button>
+      <button class="settings-nav-item" data-section="appearance">
+        <span class="settings-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+            <circle cx="13.5" cy="6.5" r=".5"/>
+            <circle cx="17.5" cy="10.5" r=".5"/>
+            <circle cx="8.5" cy="7.5" r=".5"/>
+            <circle cx="6.5" cy="12.5" r=".5"/>
+            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
+          </svg>
+        </span>
+        Appearance
+      </button>
+      <button class="settings-nav-item" data-section="wallpaper">
+        <span class="settings-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+            <rect x="3" y="4" width="18" height="16" rx="2"/>
+            <circle cx="8.5" cy="9.5" r="1.5"/>
+            <path d="M21 16l-5-5L6 20"/>
+          </svg>
+        </span>
+        Wallpaper
+      </button>
+      <button class="settings-nav-item" data-section="shortcuts">
+        <span class="settings-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+            <rect x="2" y="4" width="20" height="16" rx="2" ry="2"/>
+            <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/>
+          </svg>
+        </span>
+        Shortcuts
+      </button>
+      <button class="settings-nav-item" data-section="about">
+        <span class="settings-nav-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 16v-4M12 8h.01"/>
+          </svg>
+        </span>
+        About
+      </button>
+
+      <div class="settings-version">
+        <span id="settings-version">Mind Browser</span>
+      </div>
+    </div>
+
+    <!-- Settings Content -->
+    <div class="settings-content">
+      <button class="settings-close-btn" id="settings-close" title="Close settings">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <path d="M4 4l8 8M12 4l-8 8"/>
+        </svg>
+      </button>
+
+      <!-- Sections are rendered dynamically by js/settings.js -->
+      <div id="settings-content"></div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       SCRIPTS
+       ═══════════════════════════════════════════ -->
+  <script src="js/error-reporter.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/markdown.js"></script>
+  <script src="js/tab-manager.js"></script>
+  <script src="js/tab-switcher.js"></script>
+  <script src="js/focus-mode.js"></script>
+  <script src="js/address-bar.js"></script>
+  <script src="js/downloads.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/ai-panel.js"></script>
+  <script src="js/agent-monitor.js"></script>
+  <script src="js/command-palette.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/reading-mode.js"></script>
+  <script src="js/speech.js"></script>
+  <script src="js/task-manager.js"></script>
+  <script src="js/appearance.js"></script>
+  <script src="js/volume.js"></script>
+  <script src="js/dev-panel.js"></script>
+  <script src="js/find-bar.js"></script>
+  <script src="js/split-view.js"></script>
+  <script src="js/smart-highlights.js"></script>
+  <script src="js/clock-themes.js"></script>
+  <script src="js/extensions-ui.js"></script>
+  <script src="js/bookmarks.js"></script>
+  <script src="js/news-page.js"></script>
+  <script src="js/story-page.js"></script>
+  <script src="js/finance-chart.js"></script>
+  <script src="js/shields.js"></script>
+  <script src="js/agent-confirm.js"></script>
+  <script src="js/agent-executor.js"></script>
+  <script src="js/notes-store.js"></script>
+  <script src="js/notes-page.js"></script>
+  <script src="js/history-page.js"></script>
+  <script src="js/company-page.js"></script>
+  <script src="js/finance-page.js"></script>
+  <script src="js/new-tab-page.js"></script>
+  <script src="js/onboarding.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
