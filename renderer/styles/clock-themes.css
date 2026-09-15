@@ -1,0 +1,354 @@
+/* =============================================================================
+   Local Mind Browser — Clock Themes
+   =============================================================================
+   Every face is authored inside a fixed 160×160 box (.ct) and scaled to fit its
+   host via --ct-scale, so the same markup works at any size. */
+
+.ct-host {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+/* transform:scale() shrinks what's painted but NOT the layout box, so a scaled
+   160px face still reserved 160px and got clipped by (and mis-centred in) a
+   smaller host. .ct-sizer reserves the *scaled* size; .ct-scale draws into it
+   from the top-left, so painted size == layout size at any scale. */
+.ct-sizer {
+  position: relative;
+  flex: none;
+  width: calc(160px * var(--ct-scale, 1));
+  height: calc(160px * var(--ct-scale, 1));
+}
+.ct-scale {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 160px;
+  height: 160px;
+  transform: scale(var(--ct-scale, 1));
+  transform-origin: top left;
+}
+.ct {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* ── Shared analog face ─────────────────────────────────────────────────── */
+.ct-face { position: absolute; inset: 0; border-radius: 50%; }
+.ct-hand {
+  position: absolute;
+  left: 50%;
+  bottom: 50%;
+  transform-origin: bottom center;
+  transform: translateX(-50%);
+  border-radius: 4px;
+  z-index: 3;
+}
+.ct-hour   { width: 5px;  height: 34px; background: var(--text-primary); }
+.ct-minute { width: 3px;  height: 50px; background: var(--text-secondary); }
+.ct-second { width: 2px;  height: 56px; background: #ff5e3a; transition: transform 0.15s cubic-bezier(.4,2.4,.5,1); }
+.ct-cap {
+  position: absolute; top: 50%; left: 50%;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #ff5e3a; transform: translate(-50%, -50%); z-index: 4;
+}
+.ct-tick {
+  position: absolute; left: 50%; top: 4px;
+  width: 1px; height: 5px; background: var(--border-color);
+  transform-origin: center 76px;
+}
+.ct-tick.major { height: 9px; width: 2px; background: var(--text-tertiary); }
+.ct-num {
+  position: absolute; transform: translate(-50%, -50%);
+  font-size: 13px; font-weight: 600; color: var(--text-secondary);
+}
+
+/* ── Minimal ────────────────────────────────────────────────────────────── */
+.ct-minimal .ct-face {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* ── Digital ────────────────────────────────────────────────────────────── */
+.ct-digital {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 8px;
+}
+.ct-dig-time {
+  font-size: 44px; font-weight: 700; letter-spacing: 1px;
+  color: var(--text-primary); font-variant-numeric: tabular-nums;
+  display: flex; align-items: baseline;
+}
+.ct-colon { animation: ct-blink 1s steps(1) infinite; margin: 0 2px; }
+@keyframes ct-blink { 50% { opacity: 0.25; } }
+.ct-dig-sub {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 14px; font-weight: 600; color: var(--accent-ink);
+  font-variant-numeric: tabular-nums;
+}
+.ct-dig-sec { color: var(--text-tertiary); }
+
+/* ── LCD (7-segment) ────────────────────────────────────────────────────── */
+.ct-lcd { display: flex; align-items: center; justify-content: center; }
+.ct-lcd-panel {
+  position: relative;
+  width: 150px; height: 92px; border-radius: 12px;
+  background: linear-gradient(160deg, #cfe0e6, #a9c3cc);
+  box-shadow: inset 0 2px 6px rgba(255,255,255,0.6), inset 0 -3px 8px rgba(0,0,0,0.18), 0 3px 8px rgba(0,0,0,0.25);
+  display: flex; align-items: center; justify-content: center;
+}
+.ct-lcd-side {
+  position: absolute; left: 9px; top: 14px;
+  display: flex; flex-direction: column; gap: 3px;
+  font-size: 10px; font-weight: 800; color: rgba(20,40,50,0.22);
+}
+.ct-lcd-side .on { color: #10222b; }
+.ct-lcd-digits { display: flex; align-items: center; gap: 3px; }
+.ct-lcd-hh, .ct-lcd-mm { display: flex; gap: 3px; }
+.ct-lcd-colon { display: flex; flex-direction: column; gap: 7px; margin: 0 2px; }
+.ct-lcd-colon i { width: 5px; height: 5px; border-radius: 1px; background: #10222b; animation: ct-blink 1s steps(1) infinite; }
+.ct-lcd-bell { position: absolute; right: 8px; bottom: 6px; font-size: 11px; opacity: 0.4; }
+
+/* one 7-seg digit built from 7 <i> segments */
+.ct-seg {
+  position: relative; display: inline-block;
+  width: 22px; height: 40px;
+}
+.ct-s { position: absolute; background: #10222b; opacity: 0.08; border-radius: 2px; transition: opacity 0.15s; }
+.ct-s.on { opacity: 0.92; }
+.ct-s-a { top: 0;    left: 3px;  width: 16px; height: 4px; }
+.ct-s-g { top: 18px; left: 3px;  width: 16px; height: 4px; }
+.ct-s-d { bottom: 0; left: 3px;  width: 16px; height: 4px; }
+.ct-s-f { top: 3px;  left: 0;    width: 4px;  height: 15px; }
+.ct-s-b { top: 3px;  right: 0;   width: 4px;  height: 15px; }
+.ct-s-e { bottom: 3px; left: 0;  width: 4px;  height: 15px; }
+.ct-s-c { bottom: 3px; right: 0; width: 4px;  height: 15px; }
+
+/* ── Alarm (black analog) ───────────────────────────────────────────────── */
+.ct-alarm .ct-face {
+  inset: 6px;
+  background: radial-gradient(circle at 50% 38%, #232323, #0a0a0a 75%);
+  border: 4px solid #b8bcc2;
+  box-shadow: 0 0 0 1px #6b6f75, inset 0 0 12px rgba(0,0,0,0.8), 0 4px 12px rgba(0,0,0,0.4);
+}
+.ct-alarm .ct-num { color: #f2f2f2; font-size: 12px; }
+.ct-alarm .ct-tick { background: rgba(255,255,255,0.35); top: 10px; transform-origin: center 70px; }
+.ct-alarm .ct-tick.major { background: #fff; }
+.ct-alarm .ct-hour   { background: #f5a623; box-shadow: 0 0 4px rgba(245,166,35,0.5); }
+.ct-alarm .ct-minute { background: #fff; }
+.ct-alarm .ct-second { background: #4a90d9; }
+.ct-alarm .ct-cap { background: #f5a623; width: 12px; height: 12px; box-shadow: 0 0 0 3px #1a1a1a; }
+.ct-alarm-bell {
+  position: absolute; top: 2px; right: 4px; z-index: 5;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ff6b6b, #c0170f);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.5);
+}
+
+/* ── Flip clock ─────────────────────────────────────────────────────────── */
+.ct-flip {
+  background: linear-gradient(150deg, #ff9a2e, #f57c00);
+  border-radius: 20px; padding: 14px;
+  display: flex; flex-direction: column; justify-content: center; gap: 12px;
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 12px rgba(0,0,0,0.25);
+}
+.ct-flip-cards { display: flex; gap: 8px; justify-content: center; perspective: 320px; }
+.ct-flip-card {
+  position: relative; flex: 1; height: 74px; border-radius: 8px;
+  background: linear-gradient(#2b2b2b 0 50%, #1a1a1a 50% 100%);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.35);
+}
+.ct-flip-line {
+  position: absolute; left: 0; right: 0; top: 50%; height: 2px;
+  background: rgba(0,0,0,0.55); transform: translateY(-1px); z-index: 2;
+}
+.ct-flip-val {
+  font-size: 46px; font-weight: 700; color: #fff;
+  font-variant-numeric: tabular-nums; line-height: 1;
+}
+.ct-flip-card.flip { animation: ct-flip-anim 0.5s ease; }
+@keyframes ct-flip-anim {
+  0%   { transform: rotateX(0deg); }
+  50%  { transform: rotateX(-88deg); }
+  51%  { transform: rotateX(88deg); }
+  100% { transform: rotateX(0deg); }
+}
+.ct-flip-foot { display: flex; align-items: center; justify-content: space-between; padding: 0 2px; }
+.ct-flip-speaker {
+  width: 42px; height: 14px;
+  background-image: radial-gradient(circle, rgba(0,0,0,0.45) 1px, transparent 1.4px);
+  background-size: 5px 5px;
+}
+.ct-flip-ampm { display: flex; flex-direction: column; font-size: 12px; font-weight: 800; line-height: 1.15; color: rgba(0,0,0,0.35); }
+.ct-flip-ampm .on { color: #1a1a1a; }
+
+/* ── Vinyl turntable ────────────────────────────────────────────────────── */
+.ct-vinyl-plate {
+  position: absolute; inset: 0; border-radius: 18px;
+  background: linear-gradient(150deg, #fff, #e8e8e8);
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.9), 0 4px 12px rgba(0,0,0,0.2);
+}
+.ct-screw {
+  position: absolute; width: 8px; height: 8px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff, #b0b0b0);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15);
+}
+.ct-screw.tl { top: 9px; left: 9px; } .ct-screw.tr { top: 9px; right: 9px; }
+.ct-screw.bl { bottom: 9px; left: 9px; } .ct-screw.br { bottom: 9px; right: 9px; }
+.ct-vinyl-record {
+  position: absolute; top: 50%; left: 50%;
+  width: 128px; height: 128px; border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background:
+    repeating-radial-gradient(circle at center, #1a1a1a 0 1px, #050505 1px 3px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.05);
+  animation: ct-spin 4s linear infinite;
+  /* Paused by default, and that is the whole point.
+
+     Turning this record continuously cost about a fifth of a CPU core for as
+     long as the New Tab page was open, and it made the rest of the window feel
+     sticky. It is not raster cost (a flat colour was just as expensive) and it
+     is not fixable by promoting layers — both were measured. A 60fps animation
+     compositing over a full-window wallpaper is simply expensive, and this one
+     ran forever on a page nobody is looking at most of the time.
+
+     So it turns when there is a reason to: while you are pointing at it, and
+     while something in the browser is actually playing. A paused animation
+     produces no frames at all, so at rest this now costs nothing. */
+  animation-play-state: paused;
+}
+.ct-vinyl:hover .ct-vinyl-record,
+body.media-playing .ct-vinyl-record { animation-play-state: running; }
+.ct-vinyl-label {
+  position: absolute; top: 50%; left: 50%;
+  width: 52px; height: 52px; border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 40% 35%, #ff5b5b, #c81e1e);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.4);
+}
+.ct-vinyl-label span {
+  font-size: 6px; font-weight: 800; letter-spacing: 0.5px;
+  color: rgba(255,255,255,0.85);
+}
+.ct-vinyl-hands { z-index: 4; }
+.ct-vinyl-hands .ct-hour   { height: 26px; width: 4px; background: #f5f5f5; }
+.ct-vinyl-hands .ct-minute { height: 40px; width: 3px; background: #f5f5f5; }
+.ct-vinyl-hands .ct-cap { width: 7px; height: 7px; background: #c81e1e; }
+.ct-vinyl-arm {
+  position: absolute; top: 14px; right: 14px;
+  width: 4px; height: 92px; border-radius: 3px;
+  background: linear-gradient(#d8d8d8, #a8a8a8);
+  transform-origin: top center; transform: rotate(28deg);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3); z-index: 5;
+}
+.ct-vinyl-head {
+  position: absolute; bottom: -6px; left: -4px;
+  width: 12px; height: 14px; border-radius: 3px;
+  background: linear-gradient(#eee, #bbb);
+}
+@keyframes ct-spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+@keyframes ct-spin-solo { to { transform: rotate(360deg); } }
+
+/* Respect reduced-motion: stop the record spin */
+@media (prefers-reduced-motion: reduce) {
+  .ct-vinyl-record { animation: none; }
+  .ct-colon, .ct-lcd-colon i { animation: none; }
+}
+
+/* =============================================================================
+   Cover Flow — clock theme picker (settings)
+   ========================================================================== */
+.cf-wrap {
+  position: relative;
+  padding: 8px 0 4px;
+  user-select: none;
+}
+.cf-stage {
+  position: relative;
+  height: 210px;
+  perspective: 1100px;
+  overflow: hidden;
+}
+.cf-track {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+.cf-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 168px;
+  height: 168px;
+  margin-top: -84px;
+  border-radius: 20px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+  transition: transform 0.45s cubic-bezier(.25,.8,.3,1), opacity 0.45s ease;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backface-visibility: hidden;
+}
+.cf-card.active {
+  box-shadow: 0 18px 44px rgba(0,0,0,0.5), 0 0 0 2px var(--accent);
+  cursor: default;
+}
+.cf-preview {
+  width: 150px;
+  height: 150px;
+  pointer-events: none;
+}
+.cf-name {
+  text-align: center;
+  margin-top: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.cf-arrow {
+  position: absolute;
+  top: 95px;
+  z-index: 200;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, border-color 0.2s;
+}
+.cf-arrow:hover { background: var(--bg-tertiary); border-color: var(--accent-dim); }
+.cf-prev { left: 4px; }
+.cf-next { right: 4px; }
+.cf-dots {
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 12px;
+}
+.cf-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  background: var(--border-color);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+.cf-dot.active { background: var(--accent); transform: scale(1.3); }

@@ -1,0 +1,605 @@
+/* ============================================
+   Local Mind Browser — Settings
+   ============================================ */
+
+/* ---------- Settings Overlay ---------- */
+#settings-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-base);
+  z-index: 900;
+  display: flex;
+}
+
+#settings-overlay.hidden {
+  display: none;
+}
+
+/* ---------- Settings Sidebar ---------- */
+.settings-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--bg-primary);
+  border-right: 1px solid var(--border-color);
+  padding: 60px 0 0 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-sidebar-title {
+  padding: 0 20px 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* ---------- Settings Nav Item ---------- */
+.settings-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  transition: all var(--transition-fast);
+  border-left: 2px solid transparent;
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+
+.settings-nav-item:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.settings-nav-item.active {
+  background: var(--accent-dim);
+  color: var(--accent-ink);
+}
+
+.settings-nav-icon {
+  width: 18px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ---------- Settings Content ---------- */
+.settings-content {
+  flex: 1;
+  padding: 40px 48px;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* ---------- Section Title ---------- */
+.settings-section-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.settings-section-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+  line-height: 1.5;
+}
+
+/* ---------- Settings Group ---------- */
+.settings-group {
+  margin-bottom: 24px;
+}
+
+.settings-label {
+  display: block;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+/* ---------- Settings Input ---------- */
+.settings-input {
+  width: 100%;
+  max-width: 400px;
+  padding: 8px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 13.5px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.settings-input:focus {
+  border-color: var(--border-focus);
+}
+
+/* ---------- Settings Select ---------- */
+.settings-select {
+  width: 100%;
+  max-width: 400px;
+  padding: 8px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 13.5px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s ease;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235a6e63' d='M6 8.5L1.5 4h9L6 8.5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+  cursor: pointer;
+}
+
+.settings-select:focus {
+  border-color: var(--border-focus);
+}
+
+/* ---------- Settings Toggle ---------- */
+.settings-toggle {
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.settings-toggle.active {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.settings-toggle::after {
+  content: '';
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: white;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.settings-toggle.active::after {
+  transform: translateX(20px);
+}
+
+/* ---------- Settings Close Button ---------- */
+.settings-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 20px;
+  z-index: 10;
+  transition: all var(--transition-fast);
+}
+
+.settings-close-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.settings-close-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ---------- Settings Divider ---------- */
+.settings-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 24px 0;
+}
+
+/* ---------- Settings Row ---------- */
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+}
+
+.settings-row-info {
+  flex: 1;
+  margin-right: 16px;
+}
+
+.settings-row-label {
+  font-size: 13.5px;
+  color: var(--text-primary);
+}
+
+.settings-row-desc {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+/* ---------- Settings Buttons ---------- */
+.settings-btn {
+  padding: 8px 20px;
+  background: var(--accent);
+  color: var(--bg-base);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.settings-btn:hover {
+  background: var(--accent-hover);
+}
+
+.settings-btn:active {
+  transform: scale(0.97);
+}
+
+.settings-btn.secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.settings-btn.secondary:hover {
+  background: var(--bg-elevated);
+}
+
+.settings-btn.danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--error);
+}
+
+.settings-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+/* ---------- Settings Version ---------- */
+.settings-version {
+  margin-top: auto;
+  padding: 16px 20px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+/* ---------- Wallpaper picker ---------- */
+.wp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 9px;
+  margin-top: 8px;
+}
+.wp-tile {
+  position: relative;
+  height: 66px;
+  border-radius: 9px;
+  border: 2px solid transparent;
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
+  overflow: hidden;
+  padding: 0;
+  font-family: inherit;
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+.wp-tile:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.35); }
+.wp-tile.active { border-color: var(--accent); }
+.wp-tile span {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: 4px 6px;
+  font-size: 10px;
+  color: #fff;
+  text-align: left;
+  background: linear-gradient(transparent, rgba(0,0,0,0.75));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wp-loading {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  padding: 14px 0;
+}
+.wp-range {
+  width: 260px;
+  accent-color: var(--accent);
+  margin-top: 6px;
+  cursor: pointer;
+}
+.wp-val { color: var(--text-tertiary); font-weight: 400; margin-left: 6px; font-variant-numeric: tabular-nums; }
+/* Model catalogue */
+.mdl-list { margin-top: 10px; max-height: 340px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 10px; }
+.mdl-row { display: flex; align-items: center; gap: 10px; padding: 7px 11px; border-bottom: 1px solid var(--border-color); font-size: 12.5px; }
+.mdl-row:last-child { border-bottom: none; }
+.mdl-id { flex: 1; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mdl-prov { font-size: 11px; color: var(--text-tertiary); }
+.mdl-fav { background: none; border: none; color: var(--text-tertiary); cursor: pointer; font-size: 14px; padding: 0; }
+.mdl-fav.on { color: var(--accent-ink); }
+.mdl-use { font-size: 11px; padding: 3px 9px; border-radius: 6px; border: 1px solid var(--border-color); background: none; color: var(--text-secondary); cursor: pointer; }
+.mdl-use:hover { color: var(--accent-ink); border-color: var(--accent-dim); }
+.mdl-empty { padding: 16px; font-size: 12px; color: var(--text-tertiary); }
+
+/* ── Privacy level slider ─────────────────────────────────────────────────── */
+.plevel-card {
+  padding: 18px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+  margin-bottom: 14px;
+}
+.plevel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.plevel-name {
+  font-size: 19px;
+  font-weight: 650;
+  color: var(--text-primary);
+}
+.plevel-custom {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--warning);
+  border: 1px solid color-mix(in srgb, var(--warning) 45%, transparent);
+  border-radius: 999px;
+  padding: 2px 8px;
+  vertical-align: middle;
+  margin-left: 6px;
+}
+.plevel-tagline {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+.plevel-count {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  padding-top: 4px;
+}
+
+.plevel-slider {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  /* Left-to-right ramp: the further right, the more locked down. */
+  background: linear-gradient(to right, var(--text-tertiary), var(--accent));
+  outline: none;
+  cursor: pointer;
+}
+.plevel-slider::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  border: 3px solid var(--bg-secondary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  cursor: grab;
+}
+.plevel-slider::-webkit-slider-thumb:active { cursor: grabbing; }
+
+.plevel-ticks {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+.plevel-tick {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+.plevel-tick.on {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.plevel-detail {
+  margin-top: 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.plevel-reset {
+  margin-top: 12px;
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.plevel-reset:hover { background: var(--bg-elevated); }
+
+/* The honesty note. Deliberately plain rather than styled like a warning: it is
+   a limitation, not an alarm. */
+.plevel-note {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-tertiary);
+  padding: 10px 12px;
+  border-left: 2px solid var(--border-color);
+  margin-bottom: 4px;
+}
+
+.padvanced summary {
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  padding: 6px 0;
+  user-select: none;
+}
+.padvanced summary:hover { color: var(--accent-ink); }
+.pgroup { margin-top: 18px; }
+.pgroup-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: 6px;
+}
+.settings-subhead {
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--text-primary);
+  margin: 18px 0 10px;
+}
+
+/* ── Onion Mode ───────────────────────────────────────────────────────────── */
+.onion-pill {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  margin-left: 7px;
+  border-radius: 999px;
+  color: #c49bff;
+  background: rgba(169, 123, 240, 0.16);
+  border: 1px solid rgba(169, 123, 240, 0.35);
+  vertical-align: middle;
+}
+/* A toggle that cannot do anything yet should not look pressable. */
+.settings-toggle.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.onion-caveat {
+  margin-top: 16px;
+  padding: 13px 15px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(240, 180, 41, 0.3);
+  background: rgba(240, 180, 41, 0.07);
+  font-size: 12.3px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+.onion-caveat b {
+  color: var(--warning);
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12.5px;
+}
+
+/* ── Appearance: accent swatches ─────────────────────────────────────────── */
+.ap-swatches { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 4px; }
+.ap-swatch {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  box-shadow: 0 0 0 1px var(--border-color) inset;
+  cursor: pointer; padding: 0;
+}
+.ap-swatch:hover { transform: scale(1.06); }
+.ap-swatch.on { border-color: var(--text-primary); }
+
+/* ── About ────────────────────────────────────────────────────────────────
+   Replaces a centred logo and a marketing paragraph. What belongs here is
+   the information someone needs when reporting a problem: which build, which
+   engine, which architecture, and whether the optional pieces loaded. */
+.about-hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 4px 0 18px;
+}
+/* The real app icon rather than a stand-in glyph — the previous placeholder
+   was an "S" through a vertical bar, which read as a dollar sign. */
+.about-mark {
+  flex: 0 0 auto;
+  width: 52px; height: 52px;
+  border-radius: 13px;
+  object-fit: cover;
+  background: #000;
+  border: 1px solid var(--border-color);
+}
+
+.about-id { flex: 1 1 auto; min-width: 0; }
+.about-name { font-size: 17px; font-weight: 650; color: var(--text-primary); }
+.about-line { margin-top: 2px; font-size: 12.5px; color: var(--text-secondary); }
+.about-update { margin-top: 4px; font-size: 12px; color: var(--text-tertiary); }
+
+.about-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 26px;
+  padding: 4px 0 2px;
+}
+.about-h {
+  margin: 0 0 10px;
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--text-tertiary);
+}
+
+/* A definition list rather than rows of divs: it is literally a list of
+   term/value pairs, and it copies out of the page cleanly. */
+.about-dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  gap: 7px 18px;
+  font-size: 12.5px;
+}
+.about-dl dt { color: var(--text-secondary); white-space: nowrap; }
+.about-dl dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.about-dl dd.ok { color: var(--success); }
+.about-dl dd.warn { color: var(--text-tertiary); }
+
+.about-actions { display: flex; gap: 8px; flex-wrap: wrap; }
