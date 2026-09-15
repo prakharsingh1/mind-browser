@@ -1,0 +1,416 @@
+/* =============================================================================
+   Local Mind Browser — Feature Styles
+   =============================================================================
+   Styles for Reading Mode, Split View, Smart Highlights, and other features. */
+
+/* ── Reading Mode ──────────────────────────────────────────────────────── */
+.reading-mode #sidebar { display: none !important; }
+.reading-mode #ai-panel { display: none !important; }
+.reading-mode #tab-bar { display: none !important; }
+.reading-mode #top-bar { opacity: 0; transition: opacity 0.3s; }
+.reading-mode #top-bar:hover { opacity: 1; }
+.reading-mode #browser-viewport { border-radius: 0; }
+
+/* ── Split View ────────────────────────────────────────────────────────── */
+.split-view {
+  display: flex !important;
+  flex-direction: row !important;
+}
+
+.split-view webview {
+  width: 50% !important;
+  border-right: 1px solid var(--border-color);
+}
+
+.split-view webview.split-right {
+  border-right: none;
+  border-left: 1px solid var(--border-color);
+}
+
+/* ── Smart Highlight Popup ─────────────────────────────────────────────── */
+.highlight-popup {
+  position: fixed;
+  z-index: 99999;
+  transform: translateX(-50%);
+}
+
+.highlight-popup-inner {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 4px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(43,212,115,0.1);
+  backdrop-filter: blur(12px);
+}
+
+.hl-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.hl-btn:hover {
+  background: var(--accent-dim);
+  color: var(--accent-ink);
+}
+
+.hl-btn svg {
+  flex-shrink: 0;
+}
+
+/* ── Private / Incognito mode ──────────────────────────────────────────── */
+#incognito-badge {
+  display: none;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(167, 139, 250, 0.15);
+  color: #a78bfa;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
+}
+body.incognito-active #incognito-badge { display: flex; }
+body.incognito-active #top-bar { border-bottom-color: rgba(167, 139, 250, 0.45); }
+body.incognito-active #address-bar { border-color: rgba(167, 139, 250, 0.35); }
+
+/* ── Vertical / Left Tab Layout (Arc-style) ────────────────────────────── */
+/* When enabled, hide the top tab strip; the sidebar Open Tabs list becomes
+   the primary tab UI. */
+body.tabs-left #tab-bar { display: none !important; }
+
+/* New Tab button in the Open Tabs section header */
+.sidebar-newtab-btn {
+  margin-left: auto;
+  margin-right: 6px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.sidebar-newtab-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+/* Give the Open Tabs list a bit more presence in left-tab mode */
+body.tabs-left .open-tabs-list { max-height: none !important; }
+
+/* ── Sleeping Tabs (Memory Saver) ──────────────────────────────────────── */
+.tab.tab-sleeping {
+  opacity: 0.55;
+}
+
+/* ── Find in Page Bar ──────────────────────────────────────────────────── */
+#find-bar {
+  position: absolute;
+  top: 8px;
+  right: 16px;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+#find-bar.hidden {
+  display: none;
+}
+
+#find-input {
+  width: 180px;
+  padding: 4px 8px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+}
+
+#find-input:focus {
+  border-color: var(--border-focus);
+}
+
+#find-count {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  min-width: 40px;
+  text-align: center;
+}
+
+.find-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.find-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+/* ── Page Progress Bar ─────────────────────────────────────────────────── */
+#page-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+  z-index: 100;
+  transition: width 0.3s ease-out;
+  border-radius: 0 1px 1px 0;
+}
+
+#page-progress.loading {
+  animation: progressPulse 2s ease-in-out infinite;
+}
+
+@keyframes progressPulse {
+  0% { width: 0%; opacity: 1; }
+  50% { width: 70%; opacity: 0.8; }
+  100% { width: 95%; opacity: 0.6; }
+}
+
+/* ── Agent Step Visualizer ─────────────────────────────────────────────── */
+.agent-step {
+  display: flex;
+  gap: 10px;
+  padding: 8px 12px;
+  border-left: 2px solid var(--border-color);
+  margin-left: 6px;
+  animation: fadeSlideUp 0.3s ease-out;
+}
+
+.agent-step.active {
+  /* status shows in the icon and text, not a green rail */
+}
+
+.agent-step.completed {
+  opacity: 0.7;
+}
+
+.agent-step.error {
+  border-left-color: var(--error);
+}
+
+.agent-step-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+}
+
+.agent-step-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+
+.agent-step-action {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.agent-step-content > span:last-child {
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+
+/* ── Blocker Badge ─────────────────────────────────────────────────────── */
+.blocker-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  background: var(--error);
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  padding: 0 4px;
+}
+
+/* ── Toast Notifications ───────────────────────────────────────────────── */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 100000;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  backdrop-filter: blur(12px);
+  color: var(--text-primary);
+  font-size: 13px;
+  pointer-events: auto;
+  animation: slideInRight 0.3s ease-out;
+  max-width: 360px;
+}
+
+.toast.success { border-left: 3px solid var(--success); }
+.toast.error { border-left: 3px solid var(--error); }
+.toast.warning { border-left: 3px solid var(--warning); }
+.toast.info { border-left: 3px solid var(--info); }
+
+.toast-icon { font-size: 16px; flex-shrink: 0; }
+.toast-message { flex: 1; }
+
+/* ── Spinner ───────────────────────────────────────────────────────────── */
+.spin-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ── Quick Action Chip Hover ───────────────────────────────────────────── */
+.quick-action-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.quick-action-chip:hover {
+  background: var(--accent-dim);
+  color: var(--accent-ink);
+  border-color: rgba(43,212,115,0.3);
+  transform: translateY(-1px);
+}
+
+/* ── Task manager ──────────────────────────────────────────────────────────
+   A floating panel, not a page: you open it to find out what is spinning the
+   fan, and you want the tabs still visible behind it. */
+#task-manager {
+  position: fixed;
+  top: 64px; right: 18px;
+  width: 460px; max-width: calc(100vw - 36px);
+  max-height: min(560px, calc(100vh - 100px));
+  z-index: 8500;
+  display: none; flex-direction: column;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: 13px;
+  box-shadow: 0 20px 52px rgba(0,0,0,0.55);
+  overflow: hidden;
+}
+#task-manager.on { display: flex; }
+
+#task-manager .tm-head {
+  flex: 0 0 auto;
+  display: grid; grid-template-columns: 1fr auto;
+  gap: 2px 10px; align-items: center;
+  padding: 13px 14px 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+#task-manager .tm-title { font-size: 13.5px; font-weight: 640; color: var(--text-primary); }
+#task-manager .tm-sub { grid-column: 1; font-size: 11.5px; color: var(--text-tertiary); }
+#task-manager .tm-close {
+  grid-row: 1 / span 2; grid-column: 2;
+  width: 26px; height: 26px;
+  border: 0; border-radius: 6px; background: none;
+  color: var(--text-tertiary); font-size: 17px; line-height: 1; cursor: pointer;
+}
+#task-manager .tm-close:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+
+#task-manager .tm-cols,
+#task-manager .tm-row {
+  display: grid;
+  grid-template-columns: 1fr 84px 62px 58px;
+  gap: 8px; align-items: center;
+}
+#task-manager .tm-cols {
+  padding: 8px 14px;
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+  border-bottom: 1px solid var(--border-color);
+}
+#task-manager .tm-sort {
+  border: 0; background: none; padding: 0;
+  font: inherit; color: inherit; cursor: pointer; text-align: right;
+}
+#task-manager .tm-sort.on { color: var(--accent); }
+
+#task-manager .tm-rows { flex: 1 1 auto; overflow-y: auto; padding: 4px 0 8px; }
+#task-manager .tm-row { padding: 6px 14px; font-size: 12.5px; }
+#task-manager .tm-row:hover { background: var(--bg-secondary); }
+#task-manager .tm-row.system .tm-c-name { color: var(--text-tertiary); }
+#task-manager .tm-c-name {
+  color: var(--text-primary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+#task-manager .tm-c-num { text-align: right; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+#task-manager .tm-c-num.hot { color: #ffb454; font-weight: 600; }
+#task-manager .tm-c-act { text-align: right; }
+#task-manager .tm-kill {
+  height: 22px; padding: 0 8px;
+  border: 1px solid var(--border-color); border-radius: 6px;
+  background: var(--bg-secondary); color: var(--text-secondary);
+  font: inherit; font-size: 11px; cursor: pointer;
+}
+#task-manager .tm-kill:hover { color: var(--error); border-color: var(--error); }
