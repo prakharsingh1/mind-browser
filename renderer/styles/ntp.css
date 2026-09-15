@@ -1,0 +1,728 @@
+/* =============================================================================
+   Local Mind Browser — New Tab Page
+   =============================================================================
+   Layout contract: the hero (greeting + search + widgets + shortcuts) stays
+   optically centred no matter how much history exists. Recent conversations
+   live in their own scroll region below, so they can never push the hero up.
+   ============================================================================= */
+
+:root {
+  --ntp-gap: 12px;
+  --ntp-radius: 16px;
+  --ntp-widget-h: 138px;
+  --ntp-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ntp-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  --ntp-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.28);
+  /* Surfaces sit on top of the wallpaper, so they carry their own translucency */
+  --ntp-surface: var(--bg-secondary);
+  --ntp-surface-hover: var(--bg-tertiary);
+  --ntp-border: var(--border-color);
+}
+
+/* App-level layer: living behind the whole shell (not just the New Tab body)
+   is what lets the sidebar and chrome frost over the wallpaper. */
+#ntp-wallpaper {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-color: var(--bg-base);
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 0.6s var(--ntp-ease);
+  pointer-events: none;
+}
+#ntp-wallpaper.loaded { opacity: 1; }
+/* Dim + blur are driven by settings via inline custom properties.
+
+   The blur is a `filter` on the wallpaper itself, NOT a `backdrop-filter` on an
+   overlay above it, and that distinction is the difference between a browser
+   that feels smooth and one that does not.
+
+   This layer is fixed to the whole window and sits behind EVERY page, not just
+   the New Tab page. A backdrop-filter here forces Chromium to re-read the
+   framebuffer behind a full-viewport layer on any frame that touches it —
+   which, with a spinning clock widget on the New Tab page, meant every single
+   frame, forever. It burned a quarter of a CPU core at rest and left tiles
+   painted solid black as the compositor failed to keep up.
+
+   Declaring `backdrop-filter: blur(0px)` does NOT opt out of that cost: a zero
+   radius still builds the whole backdrop pipeline. Blurring the image directly
+   is a static, cached GPU operation that costs nothing per frame, and it looks
+   the same because there is nothing between this layer and the wallpaper. */
+#ntp-wallpaper.blurred {
+  filter: blur(var(--ntp-blur, 0px));
+  /* A blur samples past the element's edges, which would fade the wallpaper out
+     to the base colour around the border. Overscan slightly so it doesn't. */
+  transform: scale(1.04);
+}
+#ntp-wallpaper::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, var(--ntp-dim, 0.35));
+}
+/* Over a photo, flat translucency isn't enough — text washes out against bright
+   areas. Surfaces become frosted glass (blur + saturate) so they stay legible
+   on any wallpaper, and hero text picks up a soft shadow. */
+body.ntp-has-wallpaper {
+  --ntp-surface: rgba(16, 18, 22, 0.62);
+  --ntp-surface-hover: rgba(28, 31, 37, 0.78);
+  --ntp-border: rgba(255, 255, 255, 0.16);
+}
+/* Frost only the surfaces that STAY STILL.
+   backdrop-filter re-samples everything painted behind the element, and
+   Chromium rebuilds that sample whenever the element itself is transformed.
+   The widgets and shortcut tiles lift on hover (transform: translateY) and
+   there are a dozen of them, so that pairing both dropped frames and left
+   whole tiles painted solid black as the cursor moved across them.
+   Those tiles get a more opaque surface instead: same legibility over a
+   photo, none of the per-frame cost. */
+body.ntp-has-wallpaper .ntp-search,
+body.ntp-has-wallpaper .ntp-chat {
+  backdrop-filter: blur(20px) saturate(1.3);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+}
+/* background-color, not background: the weather and news tiles paint their own
+   gradient and image on top of this. */
+body.ntp-has-wallpaper .ntp-widget,
+body.ntp-has-wallpaper .ntp-shortcut {
+  background-color: rgba(16, 18, 22, 0.74);
+}
+body.ntp-has-wallpaper .ntp-widget:hover,
+body.ntp-has-wallpaper .ntp-shortcut:hover {
+  background-color: rgba(30, 33, 40, 0.86);
+}
+body.ntp-has-wallpaper .ntp-greeting h1 { text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55); }
+body.ntp-has-wallpaper .ntp-greeting p {
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+}
+body.ntp-has-wallpaper .ntp-sc-name { color: rgba(255, 255, 255, 0.92); }
+body.ntp-has-wallpaper .ntp-recent-head { color: rgba(255, 255, 255, 0.75); }
+body.ntp-has-wallpaper .ntp-chat-title { color: #fff; }
+body.ntp-has-wallpaper .ntp-notes-title { color: rgba(255, 255, 255, 0.75); }
+body.ntp-has-wallpaper #ntp-note { color: #fff; }
+body.ntp-has-wallpaper #ntp-note::placeholder { color: rgba(255, 255, 255, 0.5); }
+
+/* ── Liquid glass chrome ─────────────────────────────────────────────────────
+   With the wallpaper behind the whole shell, the sidebar / top bar / AI panel
+   become real frosted glass rather than flat translucency. Only engages when a
+   wallpaper is set, so the plain theme is untouched. */
+body.ntp-has-wallpaper #new-tab-page { background: transparent; }
+/* The sidebar and top bar sit BESIDE the content, so backdrop-filter samples
+   the wallpaper layer and nothing else. The AI panel cannot use this rule: it
+   overlaps the page, so the same filter blurs whatever site is open and the
+   panel turned into a smear of that page's colours. It gets the identical look
+   from a wallpaper it redraws itself — see ai-panel.css. */
+body.ntp-has-wallpaper #sidebar,
+body.ntp-has-wallpaper #top-bar {
+  position: relative;
+  z-index: 2;
+  /* Frosting the wallpaper is genuinely nice here, but 0.58 was letting too
+     much of a bright image through behind the tab and bookmark labels, and
+     even 0.84 kept a milky cast on a bright wallpaper. */
+  background: rgba(12, 14, 17, 0.93);
+  /* No backdrop-filter. At 0.93 alpha the frosted wallpaper contributes about
+     seven percent of each pixel — invisible in practice — while these two
+     elements span the full height and full width of the window, so keeping it
+     meant two more permanent full-size backdrop layers for the compositor to
+     re-read. The look is unchanged; the frames are not. */
+  /* A white hairline glows against a dark panel. Darker than the panel reads
+     as a seam instead of a highlight. */
+  border-color: rgba(0, 0, 0, 0.55);
+}
+/* A whisper of sheen along the inner edge. It used to start at 0.16 white,
+   which on a dark panel is not depth, it is a glowing line down the screen. */
+body.ntp-has-wallpaper #sidebar::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom,
+    rgba(255,255,255,0.05), rgba(255,255,255,0.015) 40%, transparent);
+  pointer-events: none;
+}
+body.ntp-has-wallpaper #sidebar .sidebar-item:hover,
+body.ntp-has-wallpaper #sidebar .tab:hover {
+  background: rgba(255, 255, 255, 0.055);
+}
+/* The content area must not paint an opaque backdrop over the wallpaper.
+   #webview-container is only cleared while the New Tab page is on screen —
+   real pages keep their solid backdrop so nothing shows through them. */
+body.ntp-has-wallpaper #main-content { background: transparent; }
+body.ntp-has-wallpaper.ntp-visible #webview-container { background: transparent; }
+
+/* ── Shell ───────────────────────────────────────────────────────────────── */
+/* NOTE: position/inset come from layout.css — don't restate them here or the
+   overlay stops covering the content area. Layout only below. */
+#new-tab-page {
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;           /* inner regions scroll, not the page */
+}
+
+.ntp-scroll {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;    /* keeps the hero optically centred */
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 22px 24px 12px;
+  scrollbar-width: thin;
+}
+.ntp-inner {
+  width: 100%;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin: auto 0;             /* centre when short, scroll when tall */
+  /* Widgets must respond to THIS column's width, not the window's — the
+     sidebar and AI panel change how much room we actually get. */
+  container-type: inline-size;
+  container-name: ntp;
+}
+
+/* ── Greeting ────────────────────────────────────────────────────────────── */
+.ntp-greeting { text-align: center; margin-bottom: 20px; }
+/* Display-weight system face: heavy, tightly tracked, optically centred. */
+.ntp-greeting h1 {
+  font-family: -apple-system, "SF Pro Display", BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.032em;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+  line-height: 1.08;
+  -webkit-font-smoothing: antialiased;
+}
+.ntp-greeting p {
+  font-size: 14.5px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* ── Search ──────────────────────────────────────────────────────────────── */
+.ntp-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 52px;
+  padding: 0 18px;
+  margin-bottom: 20px;
+  background: var(--ntp-surface);
+  border: 1px solid var(--ntp-border);
+  border-radius: 26px;
+  box-shadow: var(--ntp-shadow);
+  transition: border-color 0.18s var(--ntp-ease), box-shadow 0.18s var(--ntp-ease);
+}
+/* No ring on focus. The caret is the focus indicator here; a green rectangle
+   around the field on every keystroke was visual noise. */
+.ntp-search:focus-within {
+  box-shadow: var(--ntp-shadow);
+}
+.ntp-search svg { width: 18px; height: 18px; color: var(--text-tertiary); flex-shrink: 0; }
+.ntp-search input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 15px;
+}
+.ntp-kbd {
+  font-size: 11px;
+  /* tertiary on the tertiary surface lands at 2.9:1, just under the readable
+     floor; secondary clears it in both themes */
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  border-radius: 5px;
+  padding: 3px 7px;
+  flex-shrink: 0;
+}
+
+/* ── Widget grid ─────────────────────────────────────────────────────────── */
+/* News is the feature tile: a headline needs ~100 chars to actually tell the
+   story, which doesn't fit in a quarter-width card without clamping mid-word. */
+.ntp-widgets {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1.9fr;
+  gap: var(--ntp-gap);
+  margin-bottom: 18px;
+}
+@container ntp (max-width: 560px) {
+  .ntp-widgets { grid-template-columns: repeat(2, 1fr); }
+  .ntp-news { grid-column: span 2; }
+  .ntp-shortcuts { grid-template-columns: repeat(3, 1fr); }
+}
+@container ntp (max-width: 380px) {
+  .ntp-widgets { grid-template-columns: 1fr; }
+  .ntp-news { grid-column: auto; }
+  .ntp-shortcuts { grid-template-columns: repeat(2, 1fr); }
+}
+
+.ntp-widget {
+  position: relative;
+  height: var(--ntp-widget-h);
+  border-radius: var(--ntp-radius);
+  background: var(--ntp-surface);
+  border: 1px solid var(--ntp-border);
+  box-shadow: var(--ntp-shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s var(--ntp-ease), box-shadow 0.2s var(--ntp-ease),
+              border-color 0.2s var(--ntp-ease);
+}
+.ntp-widget:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--ntp-shadow-hover);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+/* ── Clock ───────────────────────────────────────────────────────────────── */
+/* Face only — no caption, so it can fill the tile. */
+.ntp-clock {
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+/* The face is authored in a fixed 160px box; .ct-sizer reserves the *scaled*
+   size so the layout box matches what's drawn and nothing gets clipped. */
+.ntp-clock-mount {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Weather ─────────────────────────────────────────────────────────────── */
+.ntp-weather {
+  padding: 14px;
+  justify-content: space-between;
+  color: #fff;
+  border: none;
+  background: linear-gradient(150deg, #5b8fc7 0%, #43679b 100%);
+}
+.ntp-weather.is-night { background: linear-gradient(150deg, #33436b 0%, #222c47 100%); }
+.ntp-weather.is-error {
+  background: var(--ntp-surface);
+  border: 1px solid var(--ntp-border);
+  color: var(--text-secondary);
+}
+.ntp-wx-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.ntp-wx-temp {
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.ntp-wx-label {
+  font-size: 11.5px;
+  opacity: 0.92;
+  margin-top: 5px;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ntp-wx-icon { width: 26px; height: 26px; flex-shrink: 0; opacity: 0.95; }
+.ntp-wx-bottom { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+.ntp-wx-city {
+  font-size: 11.5px;
+  font-weight: 500;
+  opacity: 0.95;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ntp-wx-range {
+  font-size: 11px;
+  opacity: 0.8;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.ntp-wx-retry {
+  background: none;
+  border: none;
+  color: var(--accent-ink);
+  font-family: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+.ntp-wx-retry:hover { text-decoration: underline; }
+
+/* ── Notes ───────────────────────────────────────────────────────────────── */
+.ntp-notes { padding: 0; }
+.ntp-notes-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 9px 12px 5px;
+  flex-shrink: 0;
+}
+.ntp-notes-title {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+}
+.ntp-note-status {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  opacity: 0;
+  transition: opacity 0.25s var(--ntp-ease);
+}
+.ntp-note-status.show { opacity: 1; }
+.ntp-note-status.saved { color: var(--accent-ink); }
+#ntp-note {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  padding: 0 12px;
+  background: none;
+  border: none;
+  outline: none;
+  resize: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 12.5px;
+  line-height: 1.55;
+  scrollbar-width: thin;
+}
+#ntp-note::placeholder { color: var(--text-tertiary); }
+.ntp-notes-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 12px 9px;
+  flex-shrink: 0;
+}
+.ntp-note-count { font-size: 10px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+.ntp-note-save {
+  font-size: 11px;
+  font-family: inherit;
+  color: var(--accent-ink);
+  background: var(--accent-dim);
+  border: none;
+  border-radius: 6px;
+  padding: 3px 10px;
+  cursor: pointer;
+  transition: filter 0.15s var(--ntp-ease);
+}
+.ntp-note-save:hover { filter: brightness(1.25); }
+
+/* ── News ────────────────────────────────────────────────────────────────── */
+/* Photo-first card: artwork fills the tile, headline reads off a bottom scrim. */
+.ntp-news { cursor: pointer; justify-content: flex-end; padding: 13px 14px; border: none; }
+.ntp-news-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(150deg, #2a3550, #1b2136);
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.55s var(--ntp-ease);
+}
+.ntp-news:hover .ntp-news-bg { transform: scale(1.055); }
+/* Deeper on photos than on the gradient, so white text always holds up. */
+.ntp-news-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom,
+    rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.35) 45%, rgba(0,0,0,0.82) 100%);
+}
+.ntp-news.has-art .ntp-news-scrim {
+  background: linear-gradient(to bottom,
+    rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.52) 45%, rgba(0,0,0,0.92) 100%);
+}
+.ntp-news-body { position: relative; z-index: 1; }
+.ntp-news-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.36;
+  letter-spacing: -0.005em;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+}
+
+/* ── Shortcuts ───────────────────────────────────────────────────────────── */
+.ntp-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--ntp-gap);
+  margin-bottom: 20px;
+}
+.ntp-shortcut {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 8px;
+  background: var(--ntp-surface);
+  border: 1px solid var(--ntp-border);
+  border-radius: var(--ntp-radius);
+  cursor: pointer;
+  box-shadow: var(--ntp-shadow);
+  transition: transform 0.18s var(--ntp-ease), box-shadow 0.18s var(--ntp-ease),
+              border-color 0.18s var(--ntp-ease), opacity 0.18s var(--ntp-ease);
+}
+.ntp-shortcut:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--ntp-shadow-hover);
+  border-color: var(--accent-dim);
+}
+.ntp-shortcut:active { transform: translateY(0) scale(0.98); }
+.ntp-shortcut.dragging { opacity: 0.45; cursor: grabbing; }
+.ntp-shortcut.drop-target { border-color: var(--accent); }
+.ntp-sc-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.96);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+.ntp-sc-icon img { width: 22px; height: 22px; object-fit: contain; }
+/* Letter fallback when no favicon resolves — never an ugly broken image */
+.ntp-sc-icon.fallback {
+  /* both stops stay saturated: fading to --accent-dim left the white letter on
+     a near-white field in light mode */
+  background: linear-gradient(140deg, var(--accent), #17a55c);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+}
+.ntp-sc-name {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ntp-shortcut.add {
+  border-style: dashed;
+  box-shadow: none;
+  color: var(--text-tertiary);
+}
+.ntp-shortcut.add:hover { color: var(--accent-ink); }
+.ntp-shortcut.add .ntp-sc-icon { background: none; box-shadow: none; }
+
+/* ── Recent conversations ────────────────────────────────────────────────── */
+.ntp-recent { width: 100%; }
+.ntp-recent-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 2px;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 6px;
+  color: var(--text-tertiary);
+  transition: color 0.15s var(--ntp-ease);
+}
+.ntp-recent-head:hover { color: var(--text-secondary); }
+.ntp-recent-head h3 {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0;
+  color: inherit;
+}
+.ntp-recent-chev {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  transition: transform 0.22s var(--ntp-ease);
+}
+.ntp-recent.collapsed .ntp-recent-chev { transform: rotate(-90deg); }
+.ntp-recent-count {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+/* Its own scroll region: history can never push the hero off-centre */
+.ntp-recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 9px;
+  max-height: 150px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  transition: max-height 0.25s var(--ntp-ease), opacity 0.2s var(--ntp-ease),
+              margin-top 0.25s var(--ntp-ease);
+}
+.ntp-recent.collapsed .ntp-recent-list {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+  overflow: hidden;
+}
+.ntp-chat {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 13px;
+  background: var(--ntp-surface);
+  border: 1px solid var(--ntp-border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s var(--ntp-ease), background 0.15s var(--ntp-ease);
+}
+.ntp-chat:hover { border-color: var(--accent-dim); background: var(--ntp-surface-hover); }
+.ntp-chat svg { width: 15px; height: 15px; color: var(--accent-ink); flex-shrink: 0; }
+.ntp-chat-title {
+  flex: 1;
+  font-size: 12.5px;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ntp-chat-date { font-size: 11px; color: var(--text-tertiary); flex-shrink: 0; }
+
+/* ── Shared context menu + dialog ────────────────────────────────────────── */
+.ntp-menu {
+  position: fixed;
+  z-index: 99999;
+  min-width: 176px;
+  padding: 5px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  animation: ntp-pop 0.12s var(--ntp-ease);
+}
+@keyframes ntp-pop { from { opacity: 0; transform: scale(0.96) translateY(-3px); } }
+.ntp-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 11px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.12s var(--ntp-ease), color 0.12s var(--ntp-ease);
+}
+.ntp-menu-item:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+.ntp-menu-item.danger:hover { color: var(--error, #e05c5c); }
+.ntp-menu-sep { height: 1px; background: var(--border-color); margin: 4px 8px; }
+
+.ntp-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99998;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: ntp-fade 0.15s var(--ntp-ease);
+}
+@keyframes ntp-fade { from { opacity: 0; } }
+.ntp-dialog {
+  width: 340px;
+  padding: 18px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+  animation: ntp-pop 0.16s var(--ntp-ease);
+}
+.ntp-dialog h3 { margin: 0 0 14px; font-size: 15px; color: var(--text-primary); font-weight: 600; }
+.ntp-field { margin-bottom: 11px; }
+.ntp-field label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.ntp-field input {
+  width: 100%;
+  padding: 8px 11px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s var(--ntp-ease);
+}
+.ntp-field input:focus { border-color: var(--border-focus); }
+.ntp-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.ntp-btn {
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  background: none;
+  color: var(--text-secondary);
+  transition: all 0.15s var(--ntp-ease);
+}
+.ntp-btn:hover { color: var(--text-primary); border-color: var(--text-tertiary); }
+.ntp-btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #06231a;
+  font-weight: 600;
+}
+.ntp-btn.primary:hover { filter: brightness(1.08); }
+
+/* ── Entrance ────────────────────────────────────────────────────────────────
+   Runs once on first paint (the class is removed afterwards) so refreshing a
+   widget or re-rendering shortcuts never re-triggers it. */
+@keyframes ntp-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+.ntp-inner.ntp-enter > * {
+  animation: ntp-rise 0.5s var(--ntp-ease) backwards;
+}
+.ntp-inner.ntp-enter > *:nth-child(1) { animation-delay: 0.02s; }
+.ntp-inner.ntp-enter > *:nth-child(2) { animation-delay: 0.07s; }
+.ntp-inner.ntp-enter > *:nth-child(3) { animation-delay: 0.12s; }
+.ntp-inner.ntp-enter > *:nth-child(4) { animation-delay: 0.17s; }
+.ntp-inner.ntp-enter > *:nth-child(5) { animation-delay: 0.22s; }
+
+/* Respect reduced-motion for every transition above */
+@media (prefers-reduced-motion: reduce) {
+  #ntp-wallpaper, .ntp-widget, .ntp-shortcut, .ntp-recent-list,
+  .ntp-news-bg, .ntp-recent-chev, .ntp-menu, .ntp-dialog {
+    transition: none !important;
+    animation: none !important;
+  }
+}
